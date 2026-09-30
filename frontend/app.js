@@ -9,6 +9,8 @@ let state = {
   partners: [],
   dailyBoard: null,
   transactions: [],
+  historyList: [],
+  selectedHistoryBoard: null,
   fundingMode: "solo",
   selectedSoloPartnerId: 1,
   selectedPatunganPartners: new Set([1, 2]),
@@ -53,6 +55,7 @@ function switchTab(tab) {
     payout: document.getElementById("viewPayout"),
     input: document.getElementById("viewInput"),
     list: document.getElementById("viewList"),
+    history: document.getElementById("viewHistory"),
   };
   Object.keys(views).forEach(k => {
     if (views[k]) {
@@ -66,14 +69,15 @@ function switchTab(tab) {
     payout: document.getElementById("tabBtnPayout"),
     input: document.getElementById("tabBtnInput"),
     list: document.getElementById("tabBtnList"),
+    history: document.getElementById("tabBtnHistory"),
   };
   Object.keys(tabBtns).forEach(k => {
     const btn = tabBtns[k];
     if (btn) {
       if (k === tab) {
-        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]";
       } else {
-        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all";
       }
     }
   });
@@ -83,6 +87,7 @@ function switchTab(tab) {
     payout: document.getElementById("dockBtnPayout"),
     input: document.getElementById("dockBtnInput"),
     list: document.getElementById("dockBtnList"),
+    history: document.getElementById("dockBtnHistory"),
   };
   Object.keys(dockBtns).forEach(k => {
     const btn = dockBtns[k];
@@ -92,6 +97,10 @@ function switchTab(tab) {
         : "flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white";
     }
   });
+
+  if (tab === "history") {
+    loadHistoryData();
+  }
 
   if (window.lucide) lucide.createIcons();
 }
@@ -111,7 +120,7 @@ async function loadAllData() {
       renderPatunganRows();
     }
 
-    // 2. Fetch Board
+    // 2. Fetch Board (Active session)
     const bRes = await fetch("/api/v1/board");
     const bData = await bRes.json();
     if (bData.success) {
@@ -119,7 +128,7 @@ async function loadAllData() {
       renderDailyBoard();
     }
 
-    // 3. Fetch Transactions
+    // 3. Fetch Transactions (Active session)
     const tRes = await fetch("/api/v1/transactions");
     const tData = await tRes.json();
     if (tData.success) {
@@ -145,7 +154,9 @@ function renderDailyBoard() {
   if (!board) return;
 
   // Header stats
-  document.getElementById("currentDateDisplay").textContent = `Tanggal: ${board.day_date}`;
+  const dateLabel = board.display_name || `Tanggal: ${board.day_date}`;
+  document.getElementById("currentDateDisplay").textContent = dateLabel;
+
   const badge = document.getElementById("sessionStatusBadge");
   if (badge) {
     if (board.status === "ACTIVE") {
@@ -188,7 +199,7 @@ function renderDailyBoard() {
 
     if (isZero) {
       statusBadge = `<span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-maroon-950 text-slate-400 border border-maroon-700">TIDAK ADA MODAL</span>`;
-      btnAction = `<div class="text-[11px] font-mono text-slate-500 italic py-1 text-center">Tidak keluar modal hari ini</div>`;
+      btnAction = `<div class="text-[11px] font-mono text-slate-500 italic py-1 text-center">Tidak keluar modal sesi ini</div>`;
     } else if (isTaken) {
       cardBorder = "border-emerald-500/40 bg-gradient-to-b from-maroon-900/90 to-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
       statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"><i data-lucide="check-check" class="w-3 h-3"></i> LUNAS AMBIL CASH</span>`;
@@ -285,7 +296,8 @@ function setFundingMode(mode) {
     btnPatungan.className = "px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm";
     containerSolo.classList.add("hidden");
     containerPatungan.classList.remove("hidden");
-    autoSplitEvenly();
+    // DO NOT wipe or auto-split. Render existing amounts!
+    renderPatunganRows();
   }
 }
 
@@ -324,7 +336,7 @@ function renderPatunganRows() {
 
   container.innerHTML = state.partners.map(p => {
     const isChecked = state.selectedPatunganPartners.has(p.id);
-    const amountVal = state.patunganAmounts[p.id] || 0;
+    const amountVal = state.patunganAmounts[p.id] || "";
 
     return `
       <div class="flex items-center gap-2.5 p-2.5 rounded-xl border ${isChecked ? 'border-gold-500/50 bg-gold-500/10' : 'border-maroon-700 bg-maroon-950/80'} transition-colors">
@@ -338,7 +350,7 @@ function renderPatunganRows() {
 
         <div class="flex-1 relative">
           <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-gold-400/80">Rp</span>
-          <input type="number" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-400 disabled:opacity-40 disabled:cursor-not-allowed">
+          <input type="number" id="partnerAmountInput_${p.id}" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" placeholder="0" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-400 disabled:opacity-40 disabled:cursor-not-allowed">
         </div>
       </div>
     `;
@@ -350,11 +362,20 @@ function renderPatunganRows() {
 function togglePatunganPartner(id, checked) {
   if (checked) {
     state.selectedPatunganPartners.add(id);
+    // If not set yet, fill with remaining unallocated amount, without wiping others
+    if (!state.patunganAmounts[id] || state.patunganAmounts[id] <= 0) {
+      let allocated = 0;
+      state.selectedPatunganPartners.forEach(pid => {
+        if (pid !== id) allocated += (state.patunganAmounts[pid] || 0);
+      });
+      const remaining = Math.max(0, state.inputAmount - allocated);
+      state.patunganAmounts[id] = remaining;
+    }
   } else {
     state.selectedPatunganPartners.delete(id);
     delete state.patunganAmounts[id];
   }
-  autoSplitEvenly();
+  // NEVER call autoSplitEvenly() automatically!
   renderPatunganRows();
 }
 
@@ -364,6 +385,7 @@ function setPartnerAmount(id, value) {
   updateUnallocatedCalculation();
 }
 
+// Explicit manual trigger ONLY
 function autoSplitEvenly() {
   const count = state.selectedPatunganPartners.size;
   if (count === 0 || state.inputAmount <= 0) return;
@@ -405,17 +427,14 @@ function updateUnallocatedCalculation() {
 // Amount Shortcuts
 function handleAmountInput(val) {
   state.inputAmount = parseFloat(val) || 0;
-  if (state.fundingMode === "patungan") {
-    autoSplitEvenly();
-  }
+  // NEVER wipe partner amounts automatically! Just recalculate balance indicator
+  updateUnallocatedCalculation();
 }
 
 function addAmount(delta) {
   state.inputAmount += delta;
   document.getElementById("inputTotalAmount").value = state.inputAmount;
-  if (state.fundingMode === "patungan") {
-    autoSplitEvenly();
-  }
+  updateUnallocatedCalculation();
 }
 
 function clearAmount() {
@@ -633,7 +652,7 @@ function renderTransactionsList() {
   if (badge) badge.textContent = `${list.length} Transaksi`;
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian hari ini.</div>`;
+    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian pada sesi aktif ini.</div>`;
     return;
   }
 
@@ -702,33 +721,37 @@ function copyWhatsAppRekap() {
   }
 
   const text = state.dailyBoard.whatsapp_rekap;
+  copyTextToClipboard(text, "Rekap WA berhasil disalin ke clipboard! Siap kirim ke grup.");
+}
+
+function copyTextToClipboard(text, successMsg) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(() => {
-      showToast("Rekap WA berhasil disalin ke clipboard! Siap kirim ke grup.");
+      showToast(successMsg);
     }).catch(() => {
-      fallbackCopy(text);
+      fallbackCopy(text, successMsg);
     });
   } else {
-    fallbackCopy(text);
+    fallbackCopy(text, successMsg);
   }
 }
 
-function fallbackCopy(text) {
+function fallbackCopy(text, successMsg) {
   const ta = document.createElement("textarea");
   ta.value = text;
   document.body.appendChild(ta);
   ta.select();
   document.execCommand("copy");
   document.body.removeChild(ta);
-  showToast("Rekap WA berhasil disalin ke clipboard!");
+  showToast(successMsg || "Berhasil disalin ke clipboard!");
 }
 
 // ==================== CLOSE & REOPEN SESSIONS ====================
 async function promptCloseSession() {
   const isAll = state.dailyBoard && state.dailyBoard.all_settled;
   const msg = isAll 
-    ? "Tutup buku sesi hari ini? Seluruh modal partner sudah lunas ditarik."
-    : "PERHATIAN: Masih ada pemodal yang belum mencentang ambil cash. Yakin ingin menutup buku?";
+    ? "Tutup buku sesi ini? Seluruh transaksi akan diarsipkan ke Riwayat, dan sesi baru akan dimulai dari Rp 0."
+    : "PERHATIAN: Masih ada pemodal yang belum ambil cash. Yakin ingin menutup buku sesi ini dan mulai sesi baru dari Rp 0?";
   
   if (!confirm(msg)) return;
 
@@ -736,11 +759,195 @@ async function promptCloseSession() {
     const res = await fetch("/api/v1/day/close", { method: "POST" });
     const data = await res.json();
     if (data.success) {
-      showToast(data.message);
-      loadAllData();
+      showToast("Buku berhasil ditutup & diarsipkan. Sesi baru dimulai dari Rp 0.");
+      await loadAllData();
+      switchTab("payout");
     }
   } catch (err) {
     showToast("Gagal menutup sesi", false);
+  }
+}
+
+// ==================== HISTORY ARCHIVE ====================
+async function loadHistoryData() {
+  const container = document.getElementById("historyListContainer");
+  if (!container) return;
+
+  try {
+    container.innerHTML = `<div class="text-center py-8 text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i> Memuat arsip riwayat...</div>`;
+    if (window.lucide) lucide.createIcons();
+
+    const res = await fetch("/api/v1/history");
+    const data = await res.json();
+
+    if (data.success) {
+      state.historyList = data.data;
+      renderHistoryList();
+    }
+  } catch (err) {
+    container.innerHTML = `<div class="text-center py-8 text-rose-400 text-xs">Gagal memuat arsip riwayat</div>`;
+  }
+}
+
+function renderHistoryList() {
+  const container = document.getElementById("historyListContainer");
+  if (!container) return;
+
+  const list = state.historyList || [];
+  if (list.length === 0) {
+    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada riwayat sesi buku.</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(item => {
+    const isClosed = item.status === "CLOSED";
+    const statusPill = isClosed
+      ? `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">DITUTUP (${item.closed_at_formatted || 'Arsip'})</span>`
+      : `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35 animate-pulse">SEDANG AKTIF</span>`;
+
+    return `
+      <article class="p-4 rounded-2xl bg-maroon-900/80 border ${isClosed ? 'border-gold-500/25' : 'border-emerald-500/40'} space-y-3 shadow-md">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-white font-sans">${item.display_name}</h4>
+            <div class="text-[10px] font-mono text-amber-200/60 mt-0.5">${item.total_transactions} Transaksi</div>
+          </div>
+          <div>${statusPill}</div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-maroon-950/80 border border-maroon-700/80">
+          <span class="text-xs text-slate-400">Total Modal Sesi:</span>
+          <span class="text-base sm:text-lg font-mono font-extrabold gold-metallic-text">${item.total_capital_formatted}</span>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" onclick="openHistoryDetail('${item.date_str}')" class="flex-1 py-2 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/30 text-amber-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span>Lihat Rincian Sesi</span>
+          </button>
+          <button type="button" onclick="copyHistoryWA('${item.date_str}')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]">
+            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            <span>Salin WA</span>
+          </button>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+
+async function copyHistoryWA(dateStr) {
+  try {
+    const res = await fetch(`/api/v1/history/${dateStr}`);
+    const data = await res.json();
+    if (data.success && data.data && data.data.board) {
+      copyTextToClipboard(data.data.board.whatsapp_rekap, `Rekap WA sesi ${data.data.board.display_name} disalin ke clipboard!`);
+    } else {
+      showToast("Gagal memuat rekap", false);
+    }
+  } catch (err) {
+    showToast("Kendala memuat data WA", false);
+  }
+}
+
+async function openHistoryDetail(dateStr) {
+  const modal = document.getElementById("modalHistoryDetail");
+  const content = document.getElementById("historyModalContent");
+  const title = document.getElementById("historyModalTitle");
+  const status = document.getElementById("historyModalStatus");
+  if (!modal || !content) return;
+
+  modal.classList.remove("hidden");
+  content.innerHTML = `<div class="text-center py-8 text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i> Memuat detail sesi...</div>`;
+  if (window.lucide) lucide.createIcons();
+
+  try {
+    const res = await fetch(`/api/v1/history/${dateStr}`);
+    const data = await res.json();
+
+    if (data.success && data.data) {
+      const board = data.data.board;
+      const txs = data.data.transactions;
+      state.selectedHistoryBoard = board;
+
+      if (title) title.textContent = board.display_name || dateStr;
+      if (status) {
+        status.textContent = board.status === "CLOSED" ? `BUKU DITUTUP (${board.closed_at ? board.closed_at.substring(11, 16) + ' WIB' : 'Arsip'})` : "SESI AKTIF";
+        status.className = board.status === "CLOSED" ? "text-[10px] font-mono text-slate-400" : "text-[10px] font-mono text-emerald-400";
+      }
+
+      const payoutsHtml = board.payouts.map(po => `
+        <div class="flex items-center justify-between p-2 rounded-xl bg-maroon-950 border border-maroon-700 text-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-md flex items-center justify-center font-mono font-bold text-[10px]" style="background-color: ${po.color}25; color: ${po.color};">
+              ${po.initials}
+            </div>
+            <span class="font-bold text-white">${po.name}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-bold ${po.is_taken ? 'text-emerald-400' : 'text-gold-400'}">${formatRupiah(po.total_modal)}</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded ${po.is_taken ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">${po.is_taken ? 'LUNAS' : (po.total_modal > 0 ? 'BELUM' : '-')}</span>
+          </div>
+        </div>
+      `).join("");
+
+      const txsHtml = txs.length === 0 ? `<p class="text-xs text-slate-500 py-2">Tidak ada transaksi pada sesi ini.</p>` : txs.map(t => `
+        <div class="p-2.5 rounded-xl bg-maroon-950 border border-maroon-700 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white">${t.item_name}</span>
+            <span class="font-mono font-bold text-gold-400">${formatRupiah(t.total_amount)}</span>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            ${t.shares.map(s => `
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-maroon-900 border border-maroon-700 text-slate-300">
+                ${s.partner_name}: ${formatRupiah(s.amount)}
+              </span>
+            `).join(" ")}
+          </div>
+        </div>
+      `).join("");
+
+      content.innerHTML = `
+        <div class="space-y-3">
+          <div class="p-3 rounded-xl bg-maroon-950 border border-gold-500/30 flex items-baseline justify-between">
+            <span class="text-xs text-slate-400">Total Modal Ditarik:</span>
+            <span class="text-xl font-mono font-extrabold gold-metallic-text">${formatRupiah(board.total_capital)}</span>
+          </div>
+
+          <div>
+            <h5 class="text-xs font-bold text-amber-200/80 mb-1.5">Pengembalian Modal 7 Pemodal:</h5>
+            <div class="space-y-1.5">
+              ${payoutsHtml}
+            </div>
+          </div>
+
+          <div>
+            <h5 class="text-xs font-bold text-amber-200/80 mb-1.5">Daftar Transaksi (${txs.length}):</h5>
+            <div class="space-y-1.5 max-h-48 overflow-y-auto">
+              ${txsHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    content.innerHTML = `<div class="text-center py-8 text-rose-400 text-xs">Gagal memuat rincian sesi.</div>`;
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeHistoryDetailModal() {
+  const modal = document.getElementById("modalHistoryDetail");
+  if (modal) modal.classList.add("hidden");
+}
+
+function copySpecificHistoryWA() {
+  if (state.selectedHistoryBoard && state.selectedHistoryBoard.whatsapp_rekap) {
+    copyTextToClipboard(state.selectedHistoryBoard.whatsapp_rekap, "Rekap WA riwayat sesi berhasil disalin ke clipboard!");
+  } else {
+    showToast("Data WA tidak ditemukan", false);
   }
 }
 
