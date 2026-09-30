@@ -20,6 +20,27 @@ def get_current_wib_date() -> str:
 def format_rupiah(amount: float) -> str:
     return f"Rp {int(amount):,}".replace(",", ".")
 
+def format_session_display_name(date_str: str) -> str:
+    parts = date_str.split("_")
+    base_date = parts[0]
+    session_suffix = ""
+    if len(parts) > 1 and parts[1].startswith("S"):
+        session_num = parts[1].replace("S", "")
+        session_suffix = f" (Sesi {session_num})"
+    elif len(parts) > 1:
+        session_suffix = f" ({parts[1]})"
+    else:
+        session_suffix = " (Sesi 1)"
+
+    try:
+        dt_obj = datetime.strptime(base_date, "%Y-%m-%d")
+        days_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+        day_name = days_indo[dt_obj.weekday()]
+        months_indo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+        return f"{day_name}, {dt_obj.day} {months_indo[dt_obj.month - 1]} {dt_obj.year}{session_suffix}"
+    except Exception:
+        return f"{date_str}{session_suffix}"
+
 def get_all_partners() -> List[PartnerItem]:
     conn = get_connection()
     rows = conn.execute("SELECT id, name, initials, color, is_active FROM partners ORDER BY id ASC;").fetchall()
@@ -57,37 +78,82 @@ def update_partner(partner_id: int, req: PartnerUpdateRequest) -> Optional[Partn
     return PartnerItem(id=partner_id, name=new_name, initials=new_initials, color=new_color, is_active=True)
 
 def get_or_create_day(target_date: Optional[str] = None) -> Dict[str, Any]:
-    day_date = target_date or get_current_wib_date()
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT date_str, status, opened_at, closed_at FROM days WHERE date_str = ?;", (day_date,))
-    row = cursor.fetchone()
-
-    if not row:
-        now_iso = datetime.now(WIB).isoformat()
-        cursor.execute(
-            "INSERT INTO days (date_str, status, opened_at) VALUES (?, 'ACTIVE', ?);",
-            (day_date, now_iso)
-        )
-        # Seed daily_payouts for all partners
-        partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
-        for p in partners:
-            cursor.execute(
-                "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
-                (day_date, p["id"])
-            )
-        conn.commit()
+    if target_date:
+        day_date = target_date
         cursor.execute("SELECT date_str, status, opened_at, closed_at FROM days WHERE date_str = ?;", (day_date,))
         row = cursor.fetchone()
+        if not row:
+            now_iso = datetime.now(WIB).isoformat()
+            cursor.execute(
+                "INSERT INTO days (date_str, status, opened_at) VALUES (?, 'ACTIVE', ?);",
+                (day_date, now_iso)
+            )
+            # Seed daily_payouts for all partners
+            partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+            for p in partners:
+                cursor.execute(
+                    "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+                    (day_date, p["id"])
+                )
+            conn.commit()
+            cursor.execute("SELECT date_str, status, opened_at, closed_at FROM days WHERE date_str = ?;", (day_date,))
+            row = cursor.fetchone()
 
+        data = dict(row)
+        conn.close()
+        return data
+
+    # When target_date is None, resolve the currently ACTIVE session for today!
+    today = get_current_wib_date()
+
+    active_row = cursor.execute(
+        "SELECT date_str, status, opened_at, closed_at FROM days WHERE (date_str = ? OR date_str LIKE ?) AND status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;",
+        (today, f"{today}_%")
+    ).fetchone()
+
+    if active_row:
+        data = dict(active_row)
+        conn.close()
+        return data
+
+    # If no ACTIVE session exists for today:
+    today_sessions = cursor.execute(
+        "SELECT date_str, status FROM days WHERE (date_str = ? OR date_str LIKE ?) ORDER BY date_str ASC;",
+        (today, f"{today}_%")
+    ).fetchall()
+
+    now_iso = datetime.now(WIB).isoformat()
+    if not today_sessions:
+        new_date_str = today
+    else:
+        # All existing sessions for today were CLOSED.
+        # Advance to the next session (e.g. 2026-09-30_S2) starting clean from 0!
+        next_idx = len(today_sessions) + 1
+        new_date_str = f"{today}_S{next_idx}"
+
+    cursor.execute(
+        "INSERT INTO days (date_str, status, opened_at) VALUES (?, 'ACTIVE', ?);",
+        (new_date_str, now_iso)
+    )
+    partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+    for p in partners:
+        cursor.execute(
+            "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+            (new_date_str, p["id"])
+        )
+    conn.commit()
+    cursor.execute("SELECT date_str, status, opened_at, closed_at FROM days WHERE date_str = ?;", (new_date_str,))
+    row = cursor.fetchone()
     data = dict(row)
     conn.close()
     return data
 
 def create_transaction(req: TransactionCreateRequest, target_date: Optional[str] = None) -> TransactionResponse:
-    day_date = target_date or get_current_wib_date()
-    get_or_create_day(day_date)
+    day_info = get_or_create_day(target_date)
+    day_date = day_info["date_str"]
 
     # Validate sum of shares matches total_amount
     total_shares = sum(s.amount for s in req.shares)

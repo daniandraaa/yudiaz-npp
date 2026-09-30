@@ -69,6 +69,7 @@ class PartnerPayout(BaseModel):
 
 class DailyBoardResponse(BaseModel):
     day_date: str
+    display_name: Optional[str] = None
     status: str  # ACTIVE or CLOSED
     opened_at: str
     closed_at: Optional[str] = None
