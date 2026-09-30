@@ -132,8 +132,10 @@ def list_history():
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
+@app.head("/")
 @app.get("/{full_path:path}")
-def serve_spa(full_path: str):
+@app.head("/{full_path:path}")
+def serve_spa(full_path: str = ""):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API route not found")
     
