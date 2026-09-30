@@ -153,18 +153,68 @@ function renderDailyBoard() {
   const board = state.dailyBoard;
   if (!board) return;
 
+  const isClosed = board.status === "CLOSED";
+
   // Header stats
   const dateLabel = board.display_name || `Tanggal: ${board.day_date}`;
   document.getElementById("currentDateDisplay").textContent = dateLabel;
 
+  const dot = document.getElementById("sessionIndicatorDot");
+  if (dot) {
+    if (isClosed) {
+      dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
+    } else {
+      dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse";
+    }
+  }
+
   const badge = document.getElementById("sessionStatusBadge");
   if (badge) {
-    if (board.status === "ACTIVE") {
-      badge.textContent = "SESI AKTIF";
-      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35";
-    } else {
+    if (isClosed) {
       badge.textContent = "BUKU DITUTUP";
       badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40";
+    } else {
+      badge.textContent = "SESI AKTIF";
+      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35";
+    }
+  }
+
+  // Toggle Buka Buku Banner
+  const closedBanner = document.getElementById("bookClosedBanner");
+  if (closedBanner) {
+    if (isClosed) {
+      closedBanner.classList.remove("hidden");
+    } else {
+      closedBanner.classList.add("hidden");
+    }
+  }
+
+  // Form Catat Beli states
+  const formWarning = document.getElementById("closedWarningInForm");
+  const formContainer = document.getElementById("formCatatBeliContainer");
+  if (formWarning && formContainer) {
+    if (isClosed) {
+      formWarning.classList.remove("hidden");
+      formContainer.classList.add("opacity-40", "pointer-events-none");
+    } else {
+      formWarning.classList.add("hidden");
+      formContainer.classList.remove("opacity-40", "pointer-events-none");
+    }
+  }
+
+  // Main session toggle button in Ambil Modal tab
+  const toggleBtn = document.getElementById("mainSessionToggleBtn");
+  const toggleText = document.getElementById("mainSessionToggleText");
+  const toggleIcon = document.getElementById("mainSessionToggleIcon");
+  if (toggleBtn && toggleText) {
+    if (isClosed) {
+      toggleBtn.className = "py-3.5 px-4 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(212,175,55,0.35)] transition-all active:scale-[0.98]";
+      toggleText.textContent = "Buka Buku Baru";
+      if (toggleIcon) toggleIcon.setAttribute("data-lucide", "book-open");
+    } else {
+      toggleBtn.className = "py-3 px-4 rounded-xl bg-maroon-900 hover:bg-maroon-800 border border-gold-500/30 text-amber-100/80 hover:text-white font-mono text-xs flex items-center justify-center gap-2 transition-all";
+      toggleText.textContent = "Tutup Buku Hari Ini";
+      if (toggleIcon) toggleIcon.setAttribute("data-lucide", "lock");
     }
   }
 
@@ -570,6 +620,12 @@ function closeReceiptModal() {
 
 // ==================== SUBMIT TRANSACTION ====================
 async function submitTransaction() {
+  if (state.dailyBoard && state.dailyBoard.status === "CLOSED") {
+    showToast("Buku transaksi sedang ditutup! Silakan buka buku terlebih dahulu.", false);
+    promptOpenSession();
+    return;
+  }
+
   if (state.inputAmount <= 0) {
     showToast("Nominal pembelian belum diisi!", false);
     document.getElementById("inputTotalAmount").focus();
@@ -746,12 +802,49 @@ function fallbackCopy(text, successMsg) {
   showToast(successMsg || "Berhasil disalin ke clipboard!");
 }
 
-// ==================== CLOSE & REOPEN SESSIONS ====================
+// ==================== CLOSE & OPEN SESSIONS ====================
+function handleMainSessionAction() {
+  if (state.dailyBoard && state.dailyBoard.status === "CLOSED") {
+    promptOpenSession();
+  } else {
+    promptCloseSession();
+  }
+}
+
+async function promptOpenSession() {
+  const conf = confirm(
+    "BUKA BUKU TRANSAKSI BARU?\n\n" +
+    "• Hari, tanggal, dan jam buka akan dicatat otomatis secara resmi.\n" +
+    "• Papan modal dan daftar transaksi dimulai bersih dari Rp 0.\n\n" +
+    "Lanjutkan buka buku sekarang?"
+  );
+  if (!conf) return;
+
+  try {
+    const res = await fetch("/api/v1/day/open", { method: "POST" });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || "Buku berhasil dibuka! Sesi baru aktif.");
+      await loadAllData();
+      switchTab("payout");
+    } else {
+      showToast(data.detail || "Gagal membuka buku", false);
+    }
+  } catch (err) {
+    showToast("Gagal menyambung ke server", false);
+  }
+}
+
 async function promptCloseSession() {
   const isAll = state.dailyBoard && state.dailyBoard.all_settled;
   const msg = isAll 
-    ? "Tutup buku sesi ini? Seluruh transaksi akan diarsipkan ke Riwayat, dan sesi baru akan dimulai dari Rp 0."
-    : "PERHATIAN: Masih ada pemodal yang belum ambil cash. Yakin ingin menutup buku sesi ini dan mulai sesi baru dari Rp 0?";
+    ? "TUTUP BUKU TRANSAKSI?\n\n" +
+      "• Seluruh transaksi sesi ini akan diarsipkan ke Riwayat.\n" +
+      "• Status buku kasir akan DITUTUP (modal kembali ke Rp 0).\n" +
+      "• Sesi baru hanya akan terbuka ketika Anda menekan 'Buka Buku'.\n\n" +
+      "Tutup buku sekarang?"
+    : "PERHATIAN: Masih ada pemodal yang belum ambil cash di meja kasir!\n\n" +
+      "Yakin ingin menutup buku sesi ini? Data akan diarsipkan ke Riwayat dan status buku akan DITUTUP.";
   
   if (!confirm(msg)) return;
 
@@ -759,9 +852,11 @@ async function promptCloseSession() {
     const res = await fetch("/api/v1/day/close", { method: "POST" });
     const data = await res.json();
     if (data.success) {
-      showToast("Buku berhasil ditutup & diarsipkan. Sesi baru dimulai dari Rp 0.");
+      showToast("Buku transaksi berhasil ditutup & diarsipkan.");
       await loadAllData();
       switchTab("payout");
+    } else {
+      showToast(data.detail || "Gagal menutup sesi", false);
     }
   } catch (err) {
     showToast("Gagal menutup sesi", false);

@@ -85,12 +85,7 @@ def get_board(date: Optional[str] = Query(None, description="Format YYYY-MM-DD")
 # 4. Transactions Endpoints
 @app.get("/api/v1/transactions")
 def list_transactions(date: Optional[str] = Query(None, description="Format YYYY-MM-DD or session code")):
-    if date:
-        target_date = date
-    else:
-        day_info = crud.get_or_create_day(None)
-        target_date = day_info["date_str"]
-    items = crud.get_day_transactions(target_date)
+    items = crud.get_day_transactions(day_date=date)
     return {"success": True, "data": items, "count": len(items)}
 
 @app.post("/api/v1/transactions", status_code=status.HTTP_201_CREATED)
@@ -153,32 +148,42 @@ def toggle_payout(req: TogglePayoutRequest, date: Optional[str] = Query(None)):
     if date:
         target_date = date
     else:
-        day_info = crud.get_or_create_day(None)
-        target_date = day_info["date_str"]
+        active = crud.get_active_session()
+        if active:
+            target_date = active["date_str"]
+        else:
+            latest = crud.get_latest_session()
+            target_date = latest["date_str"] if latest else ""
+
+    if not target_date:
+        raise HTTPException(status_code=400, detail="Tidak ada sesi aktif")
+
     crud.toggle_payout_status(target_date, req.partner_id, req.is_taken)
     return {"success": True, "message": "Status penarikan cash berhasil diperbarui"}
 
-# 6. Session Lifecycle Endpoints
+# 6. Session Lifecycle Endpoints (Explicit Buka & Tutup Buku)
+@app.post("/api/v1/day/open")
+def open_session():
+    """Explicitly open a new trading session. Stamps current day and time."""
+    res = crud.open_day_session()
+    return {"success": True, "message": res["message"], "data": res}
+
 @app.post("/api/v1/day/close")
 def close_session(date: Optional[str] = Query(None)):
-    if date:
-        target_date = date
-    else:
-        day_info = crud.get_or_create_day(None)
-        target_date = day_info["date_str"]
-    res = crud.close_day_session(target_date)
+    """Explicitly close the current active trading session. Archives to History."""
+    res = crud.close_day_session(date)
     return {"success": True, "message": res["message"], "data": res}
 
 @app.post("/api/v1/day/reopen")
 def reopen_session(date: Optional[str] = Query(None)):
-    target_date = date or crud.get_current_wib_date()
+    target_date = date
+    if not target_date:
+        latest = crud.get_latest_session()
+        target_date = latest["date_str"] if latest else None
+    if not target_date:
+        raise HTTPException(status_code=400, detail="Tidak ada sesi yang dapat dibuka kembali")
     crud.reopen_day_session(target_date)
     return {"success": True, "message": f"Sesi buku {target_date} berhasil dibuka kembali"}
-
-@app.post("/api/v1/day/new-session")
-def new_session():
-    res = crud.create_manual_new_session()
-    return {"success": True, "message": f"Sesi baru ({res['new_session']}) berhasil dibuka dari Rp 0", "data": res}
 
 # 7. History Endpoint
 @app.get("/api/v1/history")
