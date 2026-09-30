@@ -1,0 +1,37 @@
+[Unit]
+Description=No Pusing Pusing (NPP) - Gold Trading Capital Reconciliation Engine
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=daniilham
+Group=daniilham
+WorkingDirectory=/home/daniilham/yudiaz-npp
+
+# Environment settings
+Environment="PYTHONUNBUFFERED=1"
+Environment="NPP_HOST=127.0.0.1"
+Environment="NPP_PORT=9669"
+
+# Execute FastAPI via Uvicorn within python virtualenv
+ExecStart=/home/daniilham/yudiaz-npp/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 9669 --workers 1 --log-level info
+
+# Resilience & Auto-recovery
+Restart=always
+RestartSec=3s
+
+# Security sandboxing
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/daniilham/yudiaz-npp
+
+# Resource limits (Zero overhead guardrails)
+MemoryHigh=150M
+MemoryMax=300M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
