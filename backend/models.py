@@ -27,6 +27,7 @@ class TransactionCreateRequest(BaseModel):
     total_amount: float
     shares: List[ShareInput]
     notes: Optional[str] = None
+    receipt_image: Optional[str] = None
 
 class ShareDetail(BaseModel):
     partner_id: int
@@ -43,7 +44,17 @@ class TransactionResponse(BaseModel):
     total_amount: float
     shares: List[ShareDetail]
     notes: Optional[str] = None
+    receipt_image: Optional[str] = None
     created_at: str
+
+class ReceiptOcrResponse(BaseModel):
+    success: bool
+    receipt_filename: str
+    receipt_url: str
+    total_amount: float
+    item_name: str
+    notes: str
+    ocr_status: str
 
 class PartnerPayout(BaseModel):
     partner_id: int

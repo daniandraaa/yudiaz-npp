@@ -105,8 +105,8 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO transactions (id, day_date, item_name, total_amount, notes, created_at) VALUES (?, ?, ?, ?, ?, ?);",
-        (trx_id, day_date, item_name, req.total_amount, req.notes, now_iso)
+        "INSERT INTO transactions (id, day_date, item_name, total_amount, notes, receipt_image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?);",
+        (trx_id, day_date, item_name, req.total_amount, req.notes, req.receipt_image, now_iso)
     )
 
     shares_details: List[ShareDetail] = []
@@ -146,6 +146,7 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
         total_amount=req.total_amount,
         shares=shares_details,
         notes=req.notes,
+        receipt_image=req.receipt_image,
         created_at=now_iso,
     )
 
@@ -181,7 +182,7 @@ def get_day_transactions(day_date: str) -> List[TransactionResponse]:
     cursor = conn.cursor()
 
     t_rows = cursor.execute(
-        "SELECT id, day_date, item_name, total_amount, notes, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
+        "SELECT id, day_date, item_name, total_amount, notes, receipt_image, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
         (day_date,)
     ).fetchall()
 
@@ -224,6 +225,7 @@ def get_day_transactions(day_date: str) -> List[TransactionResponse]:
                 total_amount=tr["total_amount"],
                 shares=shares,
                 notes=tr["notes"],
+                receipt_image=tr["receipt_image"],
                 created_at=tr["created_at"],
             )
         )

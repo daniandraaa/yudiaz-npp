@@ -9,16 +9,20 @@ from typing import Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, HTTPException, Query, status, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 
 from backend.database import init_db
 from backend.models import (
-    PartnerUpdateRequest, TransactionCreateRequest, TogglePayoutRequest
+    PartnerUpdateRequest,
+    TransactionCreateRequest,
+    TogglePayoutRequest,
+    ReceiptOcrResponse,
 )
 from backend import crud
+from backend.ai_ocr import process_receipt_image, RECEIPTS_DIR
 
 START_TIME = time.time()
 FRONTEND_DIR = Path("/home/daniilham/yudiaz-npp/frontend")
@@ -102,7 +106,43 @@ def delete_buy_transaction(transaction_id: str):
         raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
     return {"success": True, "message": "Transaksi berhasil dihapus"}
 
-# 5. Payout Toggle Endpoint (Cash taken checklist)
+# 5. Receipt Image Upload & AI OCR Endpoint
+@app.post("/api/v1/ocr-receipt", response_model=ReceiptOcrResponse)
+async def upload_and_parse_receipt(file: UploadFile = File(...)):
+    """
+    Upload a receipt/proof photo and extract gold buy data via Multimodal AI Vision.
+    """
+    try:
+        content = await file.read()
+        if len(content) > 15 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Ukuran foto maksimal 15 MB")
+        
+        result = process_receipt_image(content, original_filename=file.filename or "receipt.jpg")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memproses struk: {str(e)}")
+
+@app.get("/api/v1/receipts/{filename}")
+def get_receipt_image(filename: str):
+    """Serve uploaded receipt image file."""
+    # Basic path traversal protection
+    safe_filename = Path(filename).name
+    receipt_path = RECEIPTS_DIR / safe_filename
+    if not receipt_path.exists() or not receipt_path.is_file():
+        raise HTTPException(status_code=404, detail="File struk tidak ditemukan")
+    
+    ext = receipt_path.suffix.lower()
+    media_type = "image/jpeg"
+    if ext == ".png":
+        media_type = "image/png"
+    elif ext == ".webp":
+        media_type = "image/webp"
+        
+    return FileResponse(receipt_path, media_type=media_type)
+
+# 6. Payout Toggle Endpoint (Cash taken checklist)
 @app.post("/api/v1/payout/toggle")
 def toggle_payout(req: TogglePayoutRequest, date: Optional[str] = Query(None)):
     target_date = date or crud.get_current_wib_date()

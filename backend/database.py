@@ -72,10 +72,17 @@ def init_db() -> None:
         item_name TEXT NOT NULL,
         total_amount REAL NOT NULL,
         notes TEXT,
+        receipt_image TEXT,
         created_at TEXT NOT NULL,
         FOREIGN KEY (day_date) REFERENCES days(date_str) ON DELETE CASCADE
     );
     """)
+
+    # Safe migration: ensure receipt_image column exists
+    cursor.execute("PRAGMA table_info(transactions);")
+    cols = [row[1] for row in cursor.fetchall()]
+    if "receipt_image" not in cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN receipt_image TEXT;")
 
     # 4. Transaction Shares (Pemodal per transaksi)
     cursor.execute("""
