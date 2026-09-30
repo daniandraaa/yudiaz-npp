@@ -84,8 +84,12 @@ def get_board(date: Optional[str] = Query(None, description="Format YYYY-MM-DD")
 
 # 4. Transactions Endpoints
 @app.get("/api/v1/transactions")
-def list_transactions(date: Optional[str] = Query(None, description="Format YYYY-MM-DD")):
-    target_date = date or crud.get_current_wib_date()
+def list_transactions(date: Optional[str] = Query(None, description="Format YYYY-MM-DD or session code")):
+    if date:
+        target_date = date
+    else:
+        day_info = crud.get_or_create_day(None)
+        target_date = day_info["date_str"]
     items = crud.get_day_transactions(target_date)
     return {"success": True, "data": items, "count": len(items)}
 
@@ -146,28 +150,47 @@ def get_receipt_image(filename: str):
 # 6. Payout Toggle Endpoint (Cash taken checklist)
 @app.post("/api/v1/payout/toggle")
 def toggle_payout(req: TogglePayoutRequest, date: Optional[str] = Query(None)):
-    target_date = date or crud.get_current_wib_date()
+    if date:
+        target_date = date
+    else:
+        day_info = crud.get_or_create_day(None)
+        target_date = day_info["date_str"]
     crud.toggle_payout_status(target_date, req.partner_id, req.is_taken)
     return {"success": True, "message": "Status penarikan cash berhasil diperbarui"}
 
 # 6. Session Lifecycle Endpoints
 @app.post("/api/v1/day/close")
 def close_session(date: Optional[str] = Query(None)):
-    target_date = date or crud.get_current_wib_date()
-    crud.close_day_session(target_date)
-    return {"success": True, "message": f"Sesi buku tanggal {target_date} berhasil ditutup"}
+    if date:
+        target_date = date
+    else:
+        day_info = crud.get_or_create_day(None)
+        target_date = day_info["date_str"]
+    res = crud.close_day_session(target_date)
+    return {"success": True, "message": res["message"], "data": res}
 
 @app.post("/api/v1/day/reopen")
 def reopen_session(date: Optional[str] = Query(None)):
     target_date = date or crud.get_current_wib_date()
     crud.reopen_day_session(target_date)
-    return {"success": True, "message": f"Sesi buku tanggal {target_date} berhasil dibuka kembali"}
+    return {"success": True, "message": f"Sesi buku {target_date} berhasil dibuka kembali"}
+
+@app.post("/api/v1/day/new-session")
+def new_session():
+    res = crud.create_manual_new_session()
+    return {"success": True, "message": f"Sesi baru ({res['new_session']}) berhasil dibuka dari Rp 0", "data": res}
 
 # 7. History Endpoint
 @app.get("/api/v1/history")
 def list_history():
     hist = crud.get_history_summary()
     return {"success": True, "data": hist}
+
+@app.get("/api/v1/history/{date_str}")
+def get_history_detail(date_str: str):
+    board = crud.get_daily_board(target_date=date_str)
+    txs = crud.get_day_transactions(day_date=date_str)
+    return {"success": True, "data": {"board": board, "transactions": txs}}
 
 # 8. Frontend Static Serving
 if FRONTEND_DIR.exists():

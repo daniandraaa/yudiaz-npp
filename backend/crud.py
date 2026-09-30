@@ -300,8 +300,8 @@ def get_day_transactions(day_date: str) -> List[TransactionResponse]:
     return result
 
 def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
-    day_date = target_date or get_current_wib_date()
-    day_info = get_or_create_day(day_date)
+    day_info = get_or_create_day(target_date)
+    day_date = day_info["date_str"]
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -388,17 +388,13 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
         )
 
     # 3. Generate structured WhatsApp report string
-    dt_obj = datetime.strptime(day_date, "%Y-%m-%d")
-    days_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-    day_name = days_indo[dt_obj.weekday()]
-    months_indo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-    formatted_date_indo = f"{day_name}, {dt_obj.day} {months_indo[dt_obj.month - 1]} {dt_obj.year}"
+    formatted_date_indo = format_session_display_name(day_date)
 
     wa_lines = [
         "👑 *BELI EMAS MAKASSAR*",
         "🪙 *REKAP PENGEMBALIAN MODAL (NPP)*",
         "━━━━━━━━━━━━━━━━━━━━━━",
-        f"📅 Tanggal : {formatted_date_indo}",
+        f"📅 Sesi : {formatted_date_indo}",
         f"💰 Total Modal Ditarik : *{format_rupiah(total_capital)}*",
         f"📦 Total Transaksi : {total_trx} transaksi",
         "━━━━━━━━━━━━━━━━━━━━━━",
@@ -424,6 +420,7 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
 
     return DailyBoardResponse(
         day_date=day_date,
+        display_name=formatted_date_indo,
         status=day_info["status"],
         opened_at=day_info["opened_at"],
         closed_at=day_info.get("closed_at"),
@@ -434,14 +431,40 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
         whatsapp_rekap=whatsapp_rekap,
     )
 
-def close_day_session(day_date: str) -> bool:
+def close_day_session(day_date: str) -> Dict[str, Any]:
     conn = get_connection()
     cursor = conn.cursor()
     now_iso = datetime.now(WIB).isoformat()
     cursor.execute("UPDATE days SET status = 'CLOSED', closed_at = ? WHERE date_str = ?;", (now_iso, day_date))
     conn.commit()
+
+    # Automatically initialize the next active session for today starting from 0!
+    base_date = day_date.split("_")[0]
+    today_sessions = cursor.execute(
+        "SELECT date_str FROM days WHERE (date_str = ? OR date_str LIKE ?) ORDER BY date_str ASC;",
+        (base_date, f"{base_date}_%")
+    ).fetchall()
+    next_idx = len(today_sessions) + 1
+    new_date_str = f"{base_date}_S{next_idx}"
+
+    cursor.execute(
+        "INSERT INTO days (date_str, status, opened_at) VALUES (?, 'ACTIVE', ?);",
+        (new_date_str, now_iso)
+    )
+    partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+    for p in partners:
+        cursor.execute(
+            "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+            (new_date_str, p["id"])
+        )
+    conn.commit()
     conn.close()
-    return True
+
+    return {
+        "closed_session": day_date,
+        "new_session": new_date_str,
+        "message": f"Sesi {day_date} berhasil ditutup & diarsipkan ke Riwayat. Sesi baru ({new_date_str}) dimulai dari Rp 0."
+    }
 
 def reopen_day_session(day_date: str) -> bool:
     conn = get_connection()
@@ -450,6 +473,33 @@ def reopen_day_session(day_date: str) -> bool:
     conn.commit()
     conn.close()
     return True
+
+def create_manual_new_session() -> Dict[str, Any]:
+    today = get_current_wib_date()
+    conn = get_connection()
+    cursor = conn.cursor()
+    now_iso = datetime.now(WIB).isoformat()
+
+    today_sessions = cursor.execute(
+        "SELECT date_str FROM days WHERE (date_str = ? OR date_str LIKE ?) ORDER BY date_str ASC;",
+        (today, f"{today}_%")
+    ).fetchall()
+    next_idx = len(today_sessions) + 1
+    new_date_str = f"{today}_S{next_idx}"
+
+    cursor.execute(
+        "INSERT INTO days (date_str, status, opened_at) VALUES (?, 'ACTIVE', ?);",
+        (new_date_str, now_iso)
+    )
+    partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+    for p in partners:
+        cursor.execute(
+            "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+            (new_date_str, p["id"])
+        )
+    conn.commit()
+    conn.close()
+    return {"new_session": new_date_str, "display_name": format_session_display_name(new_date_str)}
 
 def get_history_summary() -> List[Dict[str, Any]]:
     conn = get_connection()
@@ -465,18 +515,31 @@ def get_history_summary() -> List[Dict[str, Any]]:
         FROM days d
         LEFT JOIN transactions t ON d.date_str = t.day_date
         GROUP BY d.date_str
-        ORDER BY d.date_str DESC;
+        ORDER BY d.opened_at DESC, d.date_str DESC;
     """).fetchall()
     conn.close()
-    return [
-        {
-            "date_str": r["date_str"],
+
+    result = []
+    for r in rows:
+        d_str = r["date_str"]
+        c_at = r["closed_at"]
+        c_str = ""
+        if c_at:
+            try:
+                c_dt = datetime.fromisoformat(c_at)
+                c_str = c_dt.strftime("%H:%M WIB")
+            except Exception:
+                c_str = c_at
+
+        result.append({
+            "date_str": d_str,
+            "display_name": format_session_display_name(d_str),
             "status": r["status"],
             "opened_at": r["opened_at"],
-            "closed_at": r["closed_at"],
+            "closed_at": c_at,
+            "closed_at_formatted": c_str,
             "total_transactions": r["total_trx"],
             "total_capital": float(r["total_capital"]),
             "total_capital_formatted": format_rupiah(float(r["total_capital"])),
-        }
-        for r in rows
-    ]
+        })
+    return result
