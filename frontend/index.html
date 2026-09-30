@@ -211,6 +211,50 @@
           <p class="text-xs text-slate-400 mt-0.5">Input nominal keluar modal dan pilih pemodalnya.</p>
         </div>
 
+        <!-- 0. AI Receipt Scan / Camera Upload (Smart Auto-Fill) -->
+        <div class="relative bg-gradient-to-r from-gold-500/10 via-amber-500/5 to-transparent rounded-2xl border border-gold-500/30 p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-gold-400 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
+              AI OCR Devera (Pindai Nota / Struk)
+            </span>
+            <span id="ocrStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/30">Auto-Fill Form</span>
+          </div>
+
+          <input type="file" id="receiptFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(this)">
+
+          <!-- Upload Dropzone / Button -->
+          <div id="receiptDropzone" onclick="document.getElementById('receiptFileInput').click()" class="cursor-pointer border-2 border-dashed border-gold-500/40 hover:border-gold-400 rounded-xl p-3 text-center transition-all bg-obsidian-surface/60 hover:bg-gold-500/5 flex flex-col items-center justify-center gap-1.5">
+            <div id="receiptPrompt" class="flex items-center gap-2.5 text-xs font-medium text-slate-300">
+              <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+              </div>
+              <div class="text-left">
+                <span class="font-bold text-white block">Foto / Unggah Bukti Nota Transaksi</span>
+                <span class="text-[11px] text-slate-400 block">AI Devera otomatis mendeteksi nominal, nama barang & catatan</span>
+              </div>
+            </div>
+
+            <!-- Loading Spinner (Hidden by default) -->
+            <div id="receiptLoading" class="hidden flex items-center gap-2 py-2 text-gold-400 font-mono text-xs">
+              <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+              <span>Memindai nota struk emas dengan AI Vision...</span>
+            </div>
+
+            <!-- Preview Card (Hidden by default) -->
+            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-obsidian-card p-2 rounded-lg border border-gold-500/30">
+              <div class="flex items-center gap-2.5 overflow-hidden">
+                <img id="receiptThumbnail" src="" class="w-10 h-10 object-cover rounded-md border border-slate-700 shrink-0" alt="Nota">
+                <div class="text-left truncate">
+                  <span id="receiptPreviewTitle" class="text-xs font-bold text-white block truncate">Nota Terdeteksi</span>
+                  <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-400 block">✓ Form terisi otomatis</span>
+                </div>
+              </div>
+              <button type="button" onclick="event.stopPropagation(); clearReceiptUpload();" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20">Hapus</button>
+            </div>
+          </div>
+        </div>
+
         <!-- 1. Nominal Input -->
         <div class="space-y-1.5">
           <label class="text-xs font-semibold text-slate-300">Total Nominal Pembelian (Rp):</label>
@@ -344,6 +388,27 @@
       <div class="pt-3 border-t border-obsidian-border flex justify-end gap-2">
         <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-obsidian-elevated text-slate-300 hover:text-white text-xs font-semibold">Tutup</button>
         <button onclick="saveAllPartnerSettings()" class="px-4 py-2 rounded-xl gold-gradient-bg text-obsidian-core text-xs font-bold shadow-[0_0_12px_rgba(234,179,8,0.3)]">Simpan Nama</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIPT LIGHTBOX MODAL -->
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-obsidian-card border border-obsidian-border rounded-2xl max-w-lg w-full p-4 space-y-3 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-obsidian-border">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="receipt" class="w-4 h-4 text-gold-400"></i>
+          <span>Foto Bukti Transaksi Emas</span>
+        </h3>
+        <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-black/40 rounded-xl p-1">
+        <img id="receiptModalImg" src="" alt="Bukti Transaksi" class="max-h-[65vh] w-auto object-contain rounded-lg">
+      </div>
+      <div class="flex justify-end pt-1">
+        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl bg-obsidian-surface border border-obsidian-border text-slate-300 text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>

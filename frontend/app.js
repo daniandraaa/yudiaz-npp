@@ -13,6 +13,8 @@ let state = {
   selectedPatunganPartners: new Set([1, 2]),
   patunganAmounts: {},
   inputAmount: 0,
+  uploadedReceiptFilename: null,
+  uploadedReceiptUrl: null,
 };
 
 function formatRupiah(num) {
@@ -410,6 +412,127 @@ function clearAmount() {
 }
 
 // ==================== SUBMIT TRANSACTION ====================
+// ==================== RECEIPT AI OCR UPLOAD ====================
+async function handleReceiptUpload(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  const promptEl = document.getElementById("receiptPrompt");
+  const loadingEl = document.getElementById("receiptLoading");
+  const previewEl = document.getElementById("receiptPreviewBox");
+  const badgeEl = document.getElementById("ocrStatusBadge");
+
+  // Show loading state
+  if (promptEl) promptEl.classList.add("hidden");
+  if (previewEl) previewEl.classList.add("hidden");
+  if (loadingEl) loadingEl.classList.remove("hidden");
+  if (badgeEl) {
+    badgeEl.textContent = "AI Memindai...";
+    badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse";
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/v1/ocr-receipt", {
+      method: "POST",
+      body: formData
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      state.uploadedReceiptFilename = result.receipt_filename;
+      state.uploadedReceiptUrl = result.receipt_url;
+
+      // Update thumbnail and preview title
+      const thumb = document.getElementById("receiptThumbnail");
+      if (thumb) thumb.src = result.receipt_url;
+
+      const titleEl = document.getElementById("receiptPreviewTitle");
+      if (titleEl) titleEl.textContent = result.item_name || file.name;
+
+      const infoEl = document.getElementById("receiptPreviewInfo");
+      if (infoEl) infoEl.textContent = result.total_amount > 0 ? `✓ Terdeteksi ${formatRupiah(result.total_amount)}` : "✓ Foto tersimpan (Isi nominal)";
+
+      // Auto-fill form inputs
+      if (result.total_amount > 0) {
+        const amountInput = document.getElementById("inputTotalAmount");
+        if (amountInput) {
+          amountInput.value = result.total_amount;
+          handleAmountInput(result.total_amount);
+          // Highlight flash animation
+          amountInput.classList.add("border-gold-400", "bg-gold-500/10");
+          setTimeout(() => amountInput.classList.remove("border-gold-400", "bg-gold-500/10"), 1500);
+        }
+      }
+
+      if (result.item_name && result.item_name !== "Emas") {
+        const itemInput = document.getElementById("inputItemName");
+        if (itemInput) itemInput.value = result.item_name;
+      }
+
+      if (result.notes) {
+        const notesInput = document.getElementById("inputNotes");
+        if (notesInput) notesInput.value = result.notes;
+      }
+
+      if (badgeEl) {
+        badgeEl.textContent = "✓ Terisi Otomatis";
+        badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+      }
+
+      showToast(`Struk dipindai! Nominal ${formatRupiah(result.total_amount)} otomatis terisi.`);
+    } else {
+      showToast("Gagal memindai nota", false);
+    }
+  } catch (err) {
+    showToast("Kendala memproses gambar struk", false);
+  } finally {
+    if (loadingEl) loadingEl.classList.add("hidden");
+    if (state.uploadedReceiptFilename) {
+      if (previewEl) previewEl.classList.remove("hidden");
+    } else {
+      if (promptEl) promptEl.classList.remove("hidden");
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function clearReceiptUpload() {
+  state.uploadedReceiptFilename = null;
+  state.uploadedReceiptUrl = null;
+
+  const fileInput = document.getElementById("receiptFileInput");
+  if (fileInput) fileInput.value = "";
+
+  const promptEl = document.getElementById("receiptPrompt");
+  const loadingEl = document.getElementById("receiptLoading");
+  const previewEl = document.getElementById("receiptPreviewBox");
+  const badgeEl = document.getElementById("ocrStatusBadge");
+
+  if (loadingEl) loadingEl.classList.add("hidden");
+  if (previewEl) previewEl.classList.add("hidden");
+  if (promptEl) promptEl.classList.remove("hidden");
+  if (badgeEl) {
+    badgeEl.textContent = "Auto-Fill Form";
+    badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/30";
+  }
+}
+
+function openReceiptModal(url) {
+  const modal = document.getElementById("receiptModal");
+  const img = document.getElementById("receiptModalImg");
+  if (!modal || !img) return;
+  img.src = url;
+  modal.classList.remove("hidden");
+}
+
+function closeReceiptModal() {
+  const modal = document.getElementById("receiptModal");
+  if (modal) modal.classList.add("hidden");
+}
+
 async function submitTransaction() {
   if (state.inputAmount <= 0) {
     showToast("Nominal pembelian belum diisi!", false);
@@ -446,7 +569,8 @@ async function submitTransaction() {
     item_name: itemName || undefined,
     total_amount: state.inputAmount,
     shares: shares,
-    notes: notes || undefined
+    notes: notes || undefined,
+    receipt_image: state.uploadedReceiptFilename || undefined
   };
 
   try {
@@ -464,6 +588,7 @@ async function submitTransaction() {
     if (data.success) {
       showToast("Transaksi pembelian berhasil dicatat!");
       clearAmount();
+      clearReceiptUpload();
       document.getElementById("inputItemName").value = "";
       document.getElementById("inputNotes").value = "";
       await loadAllData();
@@ -514,6 +639,12 @@ function renderTransactionsList() {
             ${tx.notes ? `<p class="text-[11px] text-slate-400 mt-0.5">${tx.notes}</p>` : ''}
           </div>
           <div class="flex items-center gap-2">
+            ${tx.receipt_image ? `
+              <button onclick="openReceiptModal('/api/v1/receipts/${tx.receipt_image}')" class="text-[10px] font-mono font-bold text-gold-400 hover:text-white px-2 py-1 rounded-lg bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 flex items-center gap-1 transition-all shadow-sm">
+                <i data-lucide="image" class="w-3 h-3 text-gold-400"></i>
+                <span>Nota</span>
+              </button>
+            ` : ''}
             <span class="text-xs font-mono font-extrabold text-gold-400">${formatRupiah(tx.total_amount)}</span>
             <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1" title="Hapus Transaksi">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>

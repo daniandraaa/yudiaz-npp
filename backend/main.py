@@ -125,6 +125,7 @@ async def upload_and_parse_receipt(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Gagal memproses struk: {str(e)}")
 
 @app.get("/api/v1/receipts/{filename}")
+@app.head("/api/v1/receipts/{filename}")
 def get_receipt_image(filename: str):
     """Serve uploaded receipt image file."""
     # Basic path traversal protection

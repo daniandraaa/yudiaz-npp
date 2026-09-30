@@ -4,4 +4,6 @@ __pycache__/
 .venv/
 data/*.db*
 !data/.gitkeep
+data/receipts/*
+!data/receipts/.gitkeep
 .pytest_cache/
