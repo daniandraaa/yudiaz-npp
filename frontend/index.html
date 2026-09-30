@@ -283,7 +283,7 @@
         </div>
 
         <!-- 0. AI Receipt Scan / Camera Upload (Smart Auto-Fill) -->
-        <div class="relative bg-gradient-to-r from-gold-500/10 via-maroon-800/40 to-transparent rounded-2xl border border-gold-500/35 p-3.5 space-y-2">
+        <div class="relative bg-gradient-to-r from-gold-500/10 via-maroon-800/40 to-transparent rounded-2xl border border-gold-500/35 p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
@@ -292,36 +292,52 @@
             <span id="ocrStatusBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40">Auto-Fill Form</span>
           </div>
 
-          <input type="file" id="receiptFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(this)">
+          <!-- Hidden File Inputs: Gallery & Camera -->
+          <input type="file" id="receiptGalleryInput" accept="image/*" class="hidden" onchange="handleReceiptUpload(this)">
+          <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(this)">
 
-          <!-- Upload Dropzone / Button -->
-          <div id="receiptDropzone" onclick="document.getElementById('receiptFileInput').click()" class="cursor-pointer border-2 border-dashed border-gold-500/40 hover:border-gold-300 rounded-xl p-3 text-center transition-all bg-maroon-950/60 hover:bg-gold-500/5 flex flex-col items-center justify-center gap-1.5">
-            <div id="receiptPrompt" class="flex items-center gap-3 text-xs font-medium text-slate-300">
-              <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/30">
-                <i data-lucide="camera" class="w-4 h-4"></i>
+          <!-- Upload Dropzone / Button Container -->
+          <div id="receiptDropzone" class="border-2 border-dashed border-gold-500/40 hover:border-gold-300 rounded-xl p-3.5 text-center transition-all bg-maroon-950/60 flex flex-col items-center justify-center gap-2.5">
+            <div id="receiptPrompt" class="w-full space-y-2.5">
+              <div class="flex items-center gap-3 text-xs font-medium text-slate-300 text-left">
+                <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/30 shadow-sm">
+                  <i data-lucide="receipt" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <span class="font-bold text-white block">Unggah Bukti Nota Transaksi</span>
+                  <span class="text-[11px] text-amber-200/60 block">AI Devera otomatis mendeteksi nominal &amp; rincian emas</span>
+                </div>
               </div>
-              <div class="text-left">
-                <span class="font-bold text-white block">Foto / Unggah Bukti Nota Transaksi</span>
-                <span class="text-[11px] text-amber-200/60 block">AI Devera otomatis mendeteksi nominal, nama barang &amp; catatan</span>
+
+              <!-- Two Explicit Action Buttons: Galeri HP & Foto Kamera -->
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" onclick="document.getElementById('receiptGalleryInput').click()" class="py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/40 text-amber-100 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+                  <i data-lucide="image" class="w-4 h-4 text-gold-400"></i>
+                  <span>Pilih dari Galeri</span>
+                </button>
+                <button type="button" onclick="document.getElementById('receiptCameraInput').click()" class="py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/40 text-amber-100 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+                  <i data-lucide="camera" class="w-4 h-4 text-gold-400"></i>
+                  <span>Foto Kamera</span>
+                </button>
               </div>
             </div>
 
             <!-- Loading Spinner (Hidden by default) -->
-            <div id="receiptLoading" class="hidden flex items-center gap-2 py-2 text-gold-300 font-mono text-xs">
+            <div id="receiptLoading" class="hidden flex items-center gap-2 py-3 text-gold-300 font-mono text-xs">
               <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i>
               <span>Memindai nota struk emas dengan AI Vision...</span>
             </div>
 
             <!-- Preview Card (Hidden by default) -->
-            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-maroon-900 p-2 rounded-xl border border-gold-500/40">
+            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-maroon-900 p-2.5 rounded-xl border border-gold-500/40">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img id="receiptThumbnail" src="" class="w-10 h-10 object-cover rounded-lg border border-gold-500/40 shrink-0" alt="Nota">
+                <img id="receiptThumbnail" src="" class="w-11 h-11 object-cover rounded-lg border border-gold-500/40 shrink-0" alt="Nota">
                 <div class="text-left truncate">
                   <span id="receiptPreviewTitle" class="text-xs font-bold text-white block truncate">Nota Terdeteksi</span>
                   <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-400 block font-bold">✓ Form terisi otomatis</span>
                 </div>
               </div>
-              <button type="button" onclick="event.stopPropagation(); clearReceiptUpload();" class="text-xs text-rose-300 hover:text-white px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 transition-colors">Hapus</button>
+              <button type="button" onclick="clearReceiptUpload();" class="text-xs text-rose-300 hover:text-white px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 transition-colors">Hapus</button>
             </div>
           </div>
         </div>

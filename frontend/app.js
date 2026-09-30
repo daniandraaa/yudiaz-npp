@@ -516,8 +516,10 @@ function clearReceiptUpload() {
   state.uploadedReceiptFilename = null;
   state.uploadedReceiptUrl = null;
 
-  const fileInput = document.getElementById("receiptFileInput");
-  if (fileInput) fileInput.value = "";
+  const galInput = document.getElementById("receiptGalleryInput");
+  if (galInput) galInput.value = "";
+  const camInput = document.getElementById("receiptCameraInput");
+  if (camInput) camInput.value = "";
 
   const promptEl = document.getElementById("receiptPrompt");
   const loadingEl = document.getElementById("receiptLoading");
@@ -531,6 +533,7 @@ function clearReceiptUpload() {
     badgeEl.textContent = "Auto-Fill Form";
     badgeEl.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40";
   }
+  if (window.lucide) lucide.createIcons();
 }
 
 function openReceiptModal(url) {
