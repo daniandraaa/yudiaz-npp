@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>No Pusing Pusing — Emas Modal Tracker</title>
+  <title>Beli Emas Makassar — No Pusing Pusing (NPP)</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#EAB308">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="theme-color" content="#7B1128">
   
-  <!-- Fonts -->
+  <!-- Premium Fonts: Cinzel (Luxury Roman Serif), Plus Jakarta Sans (Modern UI), JetBrains Mono (Precision Financials) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,22 +21,35 @@
       theme: {
         extend: {
           colors: {
-            obsidian: {
-              core: "#07090E",
-              surface: "#0D121D",
-              card: "#121824",
-              elevated: "#182232",
-              border: "#202B3E",
-              hover: "#25334A"
+            maroon: {
+              950: "#0A0204",
+              900: "#130308",
+              850: "#1C060D",
+              800: "#260912",
+              750: "#320D1A",
+              700: "#431223",
+              650: "#4F1629",
+              600: "#5E1831",
+              500: "#7B1128", // Royal Burgundy from Logo
+              400: "#9C1A37",
+              300: "#C4294E",
             },
             gold: {
-              400: "#FACC15",
-              500: "#EAB308",
-              600: "#CA8A04",
-              glow: "rgba(234, 179, 8, 0.35)"
+              50: "#FFFDF5",
+              100: "#FFF9DB",
+              200: "#FFF0A8",
+              300: "#FFE675",
+              400: "#F5D77F", // Champagne metallic highlight
+              500: "#D4AF37", // 24K Classic Pure Gold
+              600: "#B89326",
+              700: "#917018",
+              800: "#6B500E",
+              900: "#443105",
+              glow: "rgba(212, 175, 55, 0.35)"
             }
           },
           fontFamily: {
+            serif: ["'Cinzel'", "'Playfair Display'", "'Georgia'", "serif"],
             sans: ["'Plus Jakarta Sans'", "sans-serif"],
             mono: ["'JetBrains Mono'", "monospace"]
           }
@@ -50,18 +64,52 @@
   <style>
     /* Prevent rubber-banding on iOS mobile */
     body {
-      background-color: #07090E;
+      background-color: #0A0204;
+      background-image: 
+        radial-gradient(circle at 50% -10%, rgba(123, 17, 40, 0.45) 0%, transparent 60%),
+        radial-gradient(circle at 90% 35%, rgba(94, 24, 49, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 10% 70%, rgba(67, 18, 35, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 50% 110%, rgba(123, 17, 40, 0.35) 0%, transparent 55%);
+      background-attachment: fixed;
       color: #F8FAFC;
       -webkit-tap-highlight-color: transparent;
     }
-    .gold-gradient-text {
-      background: linear-gradient(135deg, #FFFBEB 0%, #FDE047 50%, #CA8A04 100%);
+
+    /* Metallic Gold Text */
+    .gold-metallic-text {
+      background: linear-gradient(135deg, #FFF9D2 0%, #F5D77F 25%, #D4AF37 55%, #AA8222 85%, #F5D77F 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+
+    /* Metallic Gold Background with subtle bronze depth */
     .gold-gradient-bg {
-      background: linear-gradient(135deg, #EAB308 0%, #CA8A04 100%);
+      background: linear-gradient(135deg, #F5D77F 0%, #D4AF37 45%, #AA8222 100%);
     }
+
+    .gold-gradient-bg-hover:hover {
+      background: linear-gradient(135deg, #FFF2A8 0%, #E2BE46 45%, #B88B25 100%);
+    }
+
+    /* Subtle Gold Outline Glow */
+    .gold-box-glow {
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.18), inset 0 0 12px rgba(212, 175, 55, 0.05);
+    }
+
+    /* Luxury Maroon Surface with Gold Tinted Border */
+    .maroon-glass {
+      background: rgba(22, 5, 11, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.18);
+    }
+
+    .maroon-card {
+      background: linear-gradient(180deg, rgba(30, 8, 16, 0.95) 0%, rgba(17, 4, 9, 0.96) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      box-shadow: 0 4px 25px -3px rgba(0, 0, 0, 0.6), 0 0 15px -3px rgba(123, 17, 40, 0.2);
+    }
+
     .hide-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -71,29 +119,38 @@
     }
   </style>
 </head>
-<body class="font-sans antialiased min-h-screen flex flex-col pb-20 md:pb-6 select-none">
+<body class="font-sans antialiased min-h-screen flex flex-col pb-24 md:pb-8 select-none">
 
-  <!-- TOP HEADER -->
-  <header class="sticky top-0 z-40 bg-obsidian-surface/90 backdrop-blur-md border-b border-obsidian-border px-4 py-3">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl gold-gradient-bg flex items-center justify-center text-obsidian-core font-extrabold shadow-[0_0_15px_rgba(234,179,8,0.4)]">
-          <i data-lucide="coins" class="w-5 h-5 text-obsidian-core"></i>
+  <!-- TOP LUXURY HEADER -->
+  <header class="sticky top-0 z-40 maroon-glass border-b border-gold-500/25 px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Brand & Emblem -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="relative shrink-0">
+          <img src="/static/logo.png" alt="Beli Emas Makassar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-2 ring-gold-400/70 shadow-[0_0_15px_rgba(212,175,55,0.4)] object-cover bg-maroon-950">
+          <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-maroon-950" title="Sistem Aktif"></div>
         </div>
-        <div>
+        <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h1 class="text-sm sm:text-base font-extrabold tracking-tight gold-gradient-text">NO PUSING PUSING</h1>
-            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-gold-500/10 text-gold-400 border border-gold-500/30">NPP</span>
+            <h1 class="font-serif text-sm sm:text-base font-extrabold tracking-wider gold-metallic-text truncate">BELI EMAS MAKASSAR</h1>
+            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-gold-500/15 text-gold-300 border border-gold-500/40 shrink-0">NPP</span>
           </div>
-          <p class="text-[10px] text-slate-400">Khusus Bang Fauzan &amp; Konsorsium Emas</p>
+          <p class="text-[10px] text-amber-200/70 truncate flex items-center gap-1">
+            <span>Konsorsium Modal Emas</span>
+            <span class="text-gold-500/50">•</span>
+            <span class="text-gold-300/90 font-medium">Bang Fauzan &amp; Tim</span>
+          </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button onclick="openSettingsModal()" class="p-2 rounded-lg bg-obsidian-elevated hover:bg-obsidian-hover border border-obsidian-border text-slate-300 transition-colors" title="Pengaturan Partner">
-          <i data-lucide="settings" class="w-4 h-4"></i>
+      <!-- Header Action Buttons -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openSettingsModal()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/30 text-amber-100/90 hover:text-white transition-all flex items-center gap-1.5 shadow-sm" title="Pengaturan Nama Pemodal">
+          <i data-lucide="settings" class="w-4 h-4 text-gold-400"></i>
+          <span class="hidden sm:inline text-xs font-semibold">Partner</span>
         </button>
-        <button onclick="copyWhatsAppRekap()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-obsidian-core font-bold text-xs shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all">
+        <button onclick="copyWhatsAppRekap()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-[0_0_14px_rgba(16,185,129,0.35)] transition-all active:scale-[0.97]">
           <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Salin WA</span>
         </button>
@@ -104,41 +161,49 @@
   <!-- MAIN WRAPPER -->
   <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 space-y-4">
 
-    <!-- DATE STATUS BANNER -->
-    <div class="flex items-center justify-between bg-obsidian-card p-3 rounded-xl border border-obsidian-border text-xs">
-      <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-        <span class="font-mono text-slate-300" id="currentDateDisplay">Memuat tanggal...</span>
+    <!-- DATE & STATUS BAR -->
+    <div class="flex items-center justify-between bg-maroon-900/80 p-3 rounded-2xl border border-gold-500/20 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></div>
+        <div class="flex items-center gap-1.5 text-slate-300 font-mono text-[11px] sm:text-xs">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-gold-400"></i>
+          <span id="currentDateDisplay">Memuat tanggal...</span>
+        </div>
       </div>
       <div class="flex items-center gap-2">
-        <span id="sessionStatusBadge" class="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">SESI AKTIF</span>
-        <button onclick="refreshData()" class="text-slate-400 hover:text-white p-1" title="Segarkan Data">
+        <span id="sessionStatusBadge" class="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35">SESI AKTIF</span>
+        <button onclick="refreshData()" class="text-amber-200/70 hover:text-white p-1 rounded-lg hover:bg-maroon-800 transition-colors" title="Segarkan Data Real-Time">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
         </button>
       </div>
     </div>
 
-    <!-- HERO: TOTAL MODAL SUMMARY CARD -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-obsidian-card via-obsidian-elevated to-obsidian-card p-5 sm:p-6 rounded-2xl border border-gold-500/30 shadow-[0_0_25px_rgba(234,179,8,0.1)]">
-      <div class="absolute -right-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
-      
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+    <!-- HERO: TOTAL REKONSILIASI MODAL EMAS CARD -->
+    <div class="relative overflow-hidden maroon-card p-5 sm:p-6 rounded-2xl border border-gold-500/40 gold-box-glow">
+      <!-- Decorative radial ambient gold light -->
+      <div class="absolute -right-10 -top-10 w-44 h-44 bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-maroon-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
         <div>
-          <span class="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-            <i data-lucide="vault" class="w-3.5 h-3.5 text-gold-400"></i>
-            Total Modal Wajib Ditarik di Meja:
-          </span>
-          <div class="text-2xl sm:text-4xl font-extrabold font-mono text-white mt-1 tracking-tight" id="heroTotalCapital">
+          <div class="flex items-center gap-2">
+            <span class="w-1.5 h-4 bg-gold-400 rounded-full"></span>
+            <span class="text-[11px] font-mono uppercase tracking-wider text-amber-200/80 font-bold flex items-center gap-1.5">
+              <i data-lucide="vault" class="w-3.5 h-3.5 text-gold-400"></i>
+              Total Modal Wajib Ditarik di Meja Kasir:
+            </span>
+          </div>
+          <div class="text-2xl sm:text-4xl font-extrabold font-mono gold-metallic-text mt-1.5 tracking-tight" id="heroTotalCapital">
             Rp 0
           </div>
         </div>
 
-        <div class="flex items-center gap-3 bg-obsidian-surface/60 px-3.5 py-2 rounded-xl border border-obsidian-border text-xs font-mono">
+        <div class="flex items-center gap-3 bg-maroon-950/80 px-4 py-2.5 rounded-xl border border-gold-500/25 text-xs font-mono">
           <div>
             <div class="text-[10px] text-slate-400">Transaksi</div>
-            <div class="text-sm font-bold text-white" id="heroTotalTrx">0</div>
+            <div class="text-sm font-bold text-white" id="heroTotalTrx">0 trx</div>
           </div>
-          <div class="w-px h-6 bg-obsidian-border"></div>
+          <div class="w-px h-7 bg-maroon-700"></div>
           <div>
             <div class="text-[10px] text-slate-400">Status Ambil</div>
             <div class="text-sm font-bold text-emerald-400" id="heroSettledCount">0 / 7 Lunas</div>
@@ -147,54 +212,60 @@
       </div>
 
       <!-- Settlement Progress Bar -->
-      <div class="mt-4 pt-3 border-t border-obsidian-border/60">
-        <div class="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
-          <span>Progres Penarikan Modal Tunai</span>
-          <span id="settlementPercentText">0%</span>
+      <div class="mt-4 pt-3.5 border-t border-maroon-700/80 relative z-10">
+        <div class="flex justify-between text-[11px] font-mono text-slate-300 mb-1.5">
+          <span class="flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-gold-400"></i>
+            Progres Pengembalian Kasir Sore
+          </span>
+          <span id="settlementPercentText" class="font-bold text-gold-300">0% (Rp 0)</span>
         </div>
-        <div class="w-full bg-obsidian-surface h-2 rounded-full overflow-hidden border border-obsidian-border">
-          <div id="settlementProgressBar" class="h-full gold-gradient-bg transition-all duration-500" style="width: 0%"></div>
+        <div class="w-full bg-maroon-950 h-2.5 rounded-full overflow-hidden border border-maroon-700/90 p-0.5">
+          <div id="settlementProgressBar" class="h-full rounded-full gold-gradient-bg transition-all duration-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]" style="width: 0%"></div>
         </div>
       </div>
     </div>
 
     <!-- NAVIGATION TABS -->
-    <div class="grid grid-cols-3 gap-1 bg-obsidian-surface p-1 rounded-xl border border-obsidian-border">
-      <button onclick="switchTab('payout')" id="tabBtnPayout" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all bg-gold-500 text-obsidian-core shadow-[0_0_12px_rgba(234,179,8,0.3)]">
+    <div class="grid grid-cols-3 gap-1 bg-maroon-950/90 p-1.5 rounded-2xl border border-gold-500/25">
+      <button onclick="switchTab('payout')" id="tabBtnPayout" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]">
         <i data-lucide="hand-coins" class="w-4 h-4"></i>
         <span>Ambil Modal</span>
       </button>
-      <button onclick="switchTab('input')" id="tabBtnInput" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition-all">
+      <button onclick="switchTab('input')" id="tabBtnInput" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all">
         <i data-lucide="plus-circle" class="w-4 h-4"></i>
         <span>Catat Beli (+)</span>
       </button>
-      <button onclick="switchTab('list')" id="tabBtnList" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition-all">
+      <button onclick="switchTab('list')" id="tabBtnList" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all">
         <i data-lucide="receipt" class="w-4 h-4"></i>
         <span>Daftar Beli</span>
       </button>
     </div>
 
     <!-- VIEW 1: PAPAN AMBIL MODAL (SORE) -->
-    <section id="viewPayout" class="space-y-3">
-      <div class="flex items-center justify-between text-xs px-1 text-slate-400">
-        <span>Tarik tunai uang modal masing-masing di meja kasir:</span>
-        <span class="font-mono text-[11px] text-gold-400">7 Pemodal</span>
+    <section id="viewPayout" class="space-y-3.5">
+      <div class="flex items-center justify-between text-xs px-1 text-slate-300">
+        <span class="flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-gold-400"></i>
+          <span>Tarik tunai uang modal masing-masing di meja kasir:</span>
+        </span>
+        <span class="font-mono text-[11px] font-bold text-gold-300 bg-maroon-900 px-2 py-0.5 rounded-full border border-gold-500/30">7 Pemodal Emas</span>
       </div>
 
       <!-- 7 Payout Cards Container -->
-      <div id="payoutCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div id="payoutCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <!-- Rendered dynamically by app.js -->
-        <div class="text-center py-8 text-slate-500 text-xs">Memuat data papan modal...</div>
+        <div class="text-center py-10 text-slate-400 text-xs">Memuat data papan modal...</div>
       </div>
 
       <!-- Bottom Action Bar -->
-      <div class="pt-2 flex flex-col sm:flex-row gap-2">
-        <button onclick="copyWhatsAppRekap()" class="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-obsidian-core font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all">
+      <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+        <button onclick="copyWhatsAppRekap()" class="flex-1 py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(16,185,129,0.35)] transition-all active:scale-[0.98]">
           <i data-lucide="copy" class="w-4 h-4"></i>
           <span>Salin Rekap Pengembalian Modal ke WhatsApp</span>
         </button>
-        <button onclick="promptCloseSession()" class="py-3 px-4 rounded-xl bg-obsidian-card hover:bg-obsidian-elevated border border-obsidian-border text-slate-300 hover:text-white font-mono text-xs flex items-center justify-center gap-2 transition-all">
-          <i data-lucide="lock" class="w-4 h-4"></i>
+        <button onclick="promptCloseSession()" class="py-3 px-4 rounded-xl bg-maroon-900 hover:bg-maroon-800 border border-gold-500/30 text-amber-100/80 hover:text-white font-mono text-xs flex items-center justify-center gap-2 transition-all">
+          <i data-lucide="lock" class="w-4 h-4 text-gold-400"></i>
           <span>Tutup Buku Hari Ini</span>
         </button>
       </div>
@@ -202,101 +273,108 @@
 
     <!-- VIEW 2: FORM CATAT BELI EMAS (INPUT CEPAT) -->
     <section id="viewInput" class="hidden space-y-4">
-      <div class="bg-obsidian-card rounded-2xl border border-obsidian-border p-5 space-y-4">
+      <div class="maroon-card rounded-2xl border border-gold-500/30 p-5 sm:p-6 space-y-4.5">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+          <h2 class="text-sm font-bold text-white flex items-center gap-2 font-serif tracking-wide">
             <i data-lucide="plus-circle" class="w-4 h-4 text-gold-400"></i>
-            Catat Pembelian Emas Baru
+            <span>CATAT PEMBELIAN EMAS BARU</span>
           </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Input nominal keluar modal dan pilih pemodalnya.</p>
+          <p class="text-xs text-amber-200/60 mt-0.5">Input nominal keluar modal kasir dan pilih pemodal penyedianya.</p>
         </div>
 
         <!-- 0. AI Receipt Scan / Camera Upload (Smart Auto-Fill) -->
-        <div class="relative bg-gradient-to-r from-gold-500/10 via-amber-500/5 to-transparent rounded-2xl border border-gold-500/30 p-3.5 space-y-2">
+        <div class="relative bg-gradient-to-r from-gold-500/10 via-maroon-800/40 to-transparent rounded-2xl border border-gold-500/35 p-3.5 space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-gold-400 flex items-center gap-1.5">
+            <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
               <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
-              AI OCR Devera (Pindai Nota / Struk)
+              <span>AI OCR Devera (Pindai Nota / Struk Emas)</span>
             </span>
-            <span id="ocrStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/30">Auto-Fill Form</span>
+            <span id="ocrStatusBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40">Auto-Fill Form</span>
           </div>
 
           <input type="file" id="receiptFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(this)">
 
           <!-- Upload Dropzone / Button -->
-          <div id="receiptDropzone" onclick="document.getElementById('receiptFileInput').click()" class="cursor-pointer border-2 border-dashed border-gold-500/40 hover:border-gold-400 rounded-xl p-3 text-center transition-all bg-obsidian-surface/60 hover:bg-gold-500/5 flex flex-col items-center justify-center gap-1.5">
-            <div id="receiptPrompt" class="flex items-center gap-2.5 text-xs font-medium text-slate-300">
-              <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0">
+          <div id="receiptDropzone" onclick="document.getElementById('receiptFileInput').click()" class="cursor-pointer border-2 border-dashed border-gold-500/40 hover:border-gold-300 rounded-xl p-3 text-center transition-all bg-maroon-950/60 hover:bg-gold-500/5 flex flex-col items-center justify-center gap-1.5">
+            <div id="receiptPrompt" class="flex items-center gap-3 text-xs font-medium text-slate-300">
+              <div class="w-8 h-8 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/30">
                 <i data-lucide="camera" class="w-4 h-4"></i>
               </div>
               <div class="text-left">
                 <span class="font-bold text-white block">Foto / Unggah Bukti Nota Transaksi</span>
-                <span class="text-[11px] text-slate-400 block">AI Devera otomatis mendeteksi nominal, nama barang & catatan</span>
+                <span class="text-[11px] text-amber-200/60 block">AI Devera otomatis mendeteksi nominal, nama barang &amp; catatan</span>
               </div>
             </div>
 
             <!-- Loading Spinner (Hidden by default) -->
-            <div id="receiptLoading" class="hidden flex items-center gap-2 py-2 text-gold-400 font-mono text-xs">
-              <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+            <div id="receiptLoading" class="hidden flex items-center gap-2 py-2 text-gold-300 font-mono text-xs">
+              <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i>
               <span>Memindai nota struk emas dengan AI Vision...</span>
             </div>
 
             <!-- Preview Card (Hidden by default) -->
-            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-obsidian-card p-2 rounded-lg border border-gold-500/30">
+            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-maroon-900 p-2 rounded-xl border border-gold-500/40">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img id="receiptThumbnail" src="" class="w-10 h-10 object-cover rounded-md border border-slate-700 shrink-0" alt="Nota">
+                <img id="receiptThumbnail" src="" class="w-10 h-10 object-cover rounded-lg border border-gold-500/40 shrink-0" alt="Nota">
                 <div class="text-left truncate">
                   <span id="receiptPreviewTitle" class="text-xs font-bold text-white block truncate">Nota Terdeteksi</span>
-                  <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-400 block">✓ Form terisi otomatis</span>
+                  <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-400 block font-bold">✓ Form terisi otomatis</span>
                 </div>
               </div>
-              <button type="button" onclick="event.stopPropagation(); clearReceiptUpload();" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20">Hapus</button>
+              <button type="button" onclick="event.stopPropagation(); clearReceiptUpload();" class="text-xs text-rose-300 hover:text-white px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 transition-colors">Hapus</button>
             </div>
           </div>
         </div>
 
         <!-- 1. Nominal Input -->
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-slate-300">Total Nominal Pembelian (Rp):</label>
+          <label class="text-xs font-bold text-amber-100 flex items-center gap-1.5">
+            <i data-lucide="coins" class="w-3.5 h-3.5 text-gold-400"></i>
+            Total Nominal Pembelian (Rp):
+          </label>
           <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-bold text-gold-400 text-lg">Rp</span>
-            <input type="number" id="inputTotalAmount" placeholder="0" min="0" step="1000" class="w-full bg-obsidian-surface border border-obsidian-border rounded-xl pl-12 pr-4 py-3 text-white font-mono text-xl font-extrabold focus:outline-none focus:border-gold-500 transition-colors" oninput="handleAmountInput(this.value)">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-extrabold text-gold-400 text-lg">Rp</span>
+            <input type="number" id="inputTotalAmount" placeholder="0" min="0" step="1000" class="w-full bg-maroon-950 border border-maroon-700 focus:border-gold-400 rounded-xl pl-12 pr-4 py-3 text-white font-mono text-xl sm:text-2xl font-extrabold focus:outline-none transition-colors shadow-inner" oninput="handleAmountInput(this.value)">
           </div>
           <!-- Quick Rupiah Shortcuts -->
           <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pt-1">
-            <button type="button" onclick="addAmount(5000000)" class="px-2.5 py-1 rounded-lg bg-obsidian-elevated text-slate-300 hover:text-gold-400 text-xs font-mono border border-obsidian-border shrink-0">+5 Jt</button>
-            <button type="button" onclick="addAmount(10000000)" class="px-2.5 py-1 rounded-lg bg-obsidian-elevated text-slate-300 hover:text-gold-400 text-xs font-mono border border-obsidian-border shrink-0">+10 Jt</button>
-            <button type="button" onclick="addAmount(25000000)" class="px-2.5 py-1 rounded-lg bg-obsidian-elevated text-slate-300 hover:text-gold-400 text-xs font-mono border border-obsidian-border shrink-0">+25 Jt</button>
-            <button type="button" onclick="addAmount(50000000)" class="px-2.5 py-1 rounded-lg bg-obsidian-elevated text-slate-300 hover:text-gold-400 text-xs font-mono border border-obsidian-border shrink-0">+50 Jt</button>
-            <button type="button" onclick="clearAmount()" class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-xs font-mono border border-rose-500/30 shrink-0">Reset</button>
+            <button type="button" onclick="addAmount(5000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+5 Jt</button>
+            <button type="button" onclick="addAmount(10000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+10 Jt</button>
+            <button type="button" onclick="addAmount(25000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+25 Jt</button>
+            <button type="button" onclick="addAmount(50000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+50 Jt</button>
+            <button type="button" onclick="addAmount(100000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+100 Jt</button>
+            <button type="button" onclick="clearAmount()" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-mono border border-rose-500/30 shrink-0 transition-colors">Reset</button>
           </div>
         </div>
 
         <!-- 2. Item Label / Notes -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-300">Keterangan / Jenis Barang (Opsional):</label>
-            <input type="text" id="inputItemName" placeholder="Contoh: Kalung 20g 24K / Emas Batangan" class="w-full bg-obsidian-surface border border-obsidian-border rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-500">
+            <label class="text-xs font-medium text-slate-300">Keterangan / Jenis Barang (Opsional):</label>
+            <input type="text" id="inputItemName" placeholder="Contoh: Kalung 20g 24K / Emas Batangan" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-400 transition-colors">
           </div>
           <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-300">Catatan Tambahan (Opsional):</label>
-            <input type="text" id="inputNotes" placeholder="Contoh: Beli dari langganan toko" class="w-full bg-obsidian-surface border border-obsidian-border rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-500">
+            <label class="text-xs font-medium text-slate-300">Catatan Tambahan (Opsional):</label>
+            <input type="text" id="inputNotes" placeholder="Contoh: Beli dari langganan toko" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-400 transition-colors">
           </div>
         </div>
 
         <!-- 3. Funding Mode Switcher -->
-        <div class="pt-2 border-t border-obsidian-border/60 space-y-2">
+        <div class="pt-2 border-t border-maroon-700/80 space-y-2.5">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-white">Sumber Modal Pembelian:</label>
-            <div class="flex items-center bg-obsidian-surface p-0.5 rounded-lg border border-obsidian-border text-[11px] font-mono">
-              <button type="button" onclick="setFundingMode('solo')" id="btnModeSolo" class="px-2.5 py-1 rounded bg-gold-500 text-obsidian-core font-bold transition-all">Solo (1 Orang)</button>
-              <button type="button" onclick="setFundingMode('patungan')" id="btnModePatungan" class="px-2.5 py-1 rounded text-slate-400 hover:text-white transition-all">Patungan (2+ Orang)</button>
+            <label class="text-xs font-bold text-white flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5 text-gold-400"></i>
+              Sumber Modal Pembelian:
+            </label>
+            <div class="flex items-center bg-maroon-950 p-1 rounded-xl border border-gold-500/25 text-[11px] font-mono">
+              <button type="button" onclick="setFundingMode('solo')" id="btnModeSolo" class="px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm">Solo (1 Orang)</button>
+              <button type="button" onclick="setFundingMode('patungan')" id="btnModePatungan" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all">Patungan (2+ Orang)</button>
             </div>
           </div>
 
           <!-- SOLO MODE: 7 QUICK TAP BUTTONS -->
           <div id="soloModeContainer" class="space-y-2">
-            <p class="text-[11px] text-slate-400">Klik 1 nama pemodal di bawah (100% modal dia):</p>
+            <p class="text-[11px] text-amber-200/60">Pilih 1 nama pemodal di bawah (100% modal dia):</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="soloPartnerButtons">
               <!-- Rendered dynamically -->
             </div>
@@ -305,8 +383,8 @@
           <!-- PATUNGAN MODE: CHECKBOXES & CUSTOM AMOUNTS -->
           <div id="patunganModeContainer" class="hidden space-y-3 pt-2">
             <div class="flex items-center justify-between">
-              <p class="text-[11px] text-slate-400">Pilih pemodal &amp; tentukan nominalnya:</p>
-              <button type="button" onclick="autoSplitEvenly()" class="px-2.5 py-1 rounded-lg bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 border border-gold-500/40 text-xs font-mono font-bold flex items-center gap-1 transition-all">
+              <p class="text-[11px] text-amber-200/60">Pilih pemodal &amp; tentukan nominalnya:</p>
+              <button type="button" onclick="autoSplitEvenly()" class="px-3 py-1.5 rounded-lg bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all">
                 <i data-lucide="divide" class="w-3 h-3"></i>
                 <span>Bagi Rata</span>
               </button>
@@ -318,7 +396,7 @@
             </div>
 
             <!-- Unallocated balance warning -->
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-obsidian-surface border border-obsidian-border text-xs font-mono">
+            <div class="flex items-center justify-between p-3 rounded-xl bg-maroon-950 border border-maroon-700 text-xs font-mono">
               <span class="text-slate-400">Sisa Belum Dialokasikan:</span>
               <span id="unallocatedDisplay" class="font-bold text-emerald-400">Rp 0 (Pas)</span>
             </div>
@@ -326,7 +404,7 @@
         </div>
 
         <!-- Submit Button -->
-        <button type="button" onclick="submitTransaction()" id="btnSubmitTrx" class="w-full py-3.5 rounded-xl gold-gradient-bg text-obsidian-core font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-[0.98] transition-all">
+        <button type="button" onclick="submitTransaction()" id="btnSubmitTrx" class="w-full py-3.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_22px_rgba(212,175,55,0.4)] active:scale-[0.98] transition-all">
           <i data-lucide="check-circle-2" class="w-5 h-5"></i>
           <span>Simpan Transaksi Pembelian</span>
         </button>
@@ -335,27 +413,30 @@
 
     <!-- VIEW 3: DAFTAR TRANSAKSI HARI INI -->
     <section id="viewList" class="hidden space-y-3">
-      <div class="flex items-center justify-between text-xs px-1 text-slate-400">
-        <span>Riwayat transaksi pembelian emas hari ini:</span>
-        <span class="font-mono text-gold-400" id="txCountBadge">0 Transaksi</span>
+      <div class="flex items-center justify-between text-xs px-1 text-slate-300">
+        <span class="flex items-center gap-1.5">
+          <i data-lucide="history" class="w-3.5 h-3.5 text-gold-400"></i>
+          <span>Riwayat transaksi pembelian emas hari ini:</span>
+        </span>
+        <span class="font-mono text-gold-300 bg-maroon-900 px-2.5 py-0.5 rounded-full border border-gold-500/30" id="txCountBadge">0 Transaksi</span>
       </div>
 
       <div id="txListContainer" class="space-y-2.5">
         <!-- Rendered dynamically -->
-        <div class="text-center py-8 text-slate-500 text-xs">Belum ada transaksi pembelian hari ini.</div>
+        <div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian hari ini.</div>
       </div>
     </section>
 
   </main>
 
   <!-- BOTTOM MOBILE DOCK NAVIGATION -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-obsidian-surface/95 backdrop-blur-lg border-t border-obsidian-border px-4 py-2 flex items-center justify-around md:hidden">
-    <button onclick="switchTab('payout')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-gold-400" id="dockBtnPayout">
+  <nav class="fixed bottom-0 left-0 right-0 z-40 maroon-glass border-t border-gold-500/30 px-4 py-2.5 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
+    <button onclick="switchTab('payout')" class="flex flex-col items-center gap-1 text-[10px] font-bold text-gold-400" id="dockBtnPayout">
       <i data-lucide="hand-coins" class="w-5 h-5"></i>
       <span>Papan Modal</span>
     </button>
     <button onclick="switchTab('input')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white" id="dockBtnInput">
-      <div class="w-8 h-8 rounded-full gold-gradient-bg text-obsidian-core flex items-center justify-center -mt-3 shadow-[0_0_12px_rgba(234,179,8,0.4)]">
+      <div class="w-9 h-9 rounded-full gold-gradient-bg text-maroon-950 flex items-center justify-center -mt-4 shadow-[0_0_15px_rgba(212,175,55,0.45)] ring-2 ring-maroon-950">
         <i data-lucide="plus" class="w-5 h-5 stroke-[2.5]"></i>
       </div>
       <span>Catat Beli</span>
@@ -367,35 +448,35 @@
   </nav>
 
   <!-- MODAL: SETTINGS (EDIT 7 PARTNER NAMES) -->
-  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-obsidian-card w-full max-w-md rounded-2xl border border-obsidian-border p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-obsidian-border">
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="maroon-card w-full max-w-md rounded-2xl border border-gold-500/40 p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-maroon-700">
         <div class="flex items-center gap-2">
           <i data-lucide="users" class="w-4 h-4 text-gold-400"></i>
-          <h3 class="text-sm font-bold text-white">Pengaturan Nama 7 Pemodal</h3>
+          <h3 class="text-sm font-bold text-white font-serif tracking-wide">PENGATURAN 7 PEMODAL EMAS</h3>
         </div>
         <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <p class="text-xs text-slate-400">Sesuaikan nama panggilan ke-7 pemodal konsorsium emas:</p>
+      <p class="text-xs text-amber-200/60">Sesuaikan nama panggilan ke-7 pemodal konsorsium emas:</p>
 
       <div class="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1" id="settingsPartnersList">
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="pt-3 border-t border-obsidian-border flex justify-end gap-2">
-        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-obsidian-elevated text-slate-300 hover:text-white text-xs font-semibold">Tutup</button>
-        <button onclick="saveAllPartnerSettings()" class="px-4 py-2 rounded-xl gold-gradient-bg text-obsidian-core text-xs font-bold shadow-[0_0_12px_rgba(234,179,8,0.3)]">Simpan Nama</button>
+      <div class="pt-3 border-t border-maroon-700 flex justify-end gap-2">
+        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-maroon-850 text-slate-300 hover:text-white text-xs font-semibold border border-maroon-700">Tutup</button>
+        <button onclick="saveAllPartnerSettings()" class="px-4 py-2 rounded-xl gold-gradient-bg text-maroon-950 text-xs font-bold shadow-[0_0_12px_rgba(212,175,55,0.3)]">Simpan Nama</button>
       </div>
     </div>
   </div>
 
   <!-- RECEIPT LIGHTBOX MODAL -->
-  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-obsidian-card border border-obsidian-border rounded-2xl max-w-lg w-full p-4 space-y-3 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b border-obsidian-border">
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="maroon-card border border-gold-500/40 rounded-2xl max-w-lg w-full p-4 space-y-3 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-maroon-700">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
           <i data-lucide="receipt" class="w-4 h-4 text-gold-400"></i>
           <span>Foto Bukti Transaksi Emas</span>
@@ -404,17 +485,17 @@
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div class="flex-1 overflow-auto flex items-center justify-center bg-black/40 rounded-xl p-1">
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-black/50 rounded-xl p-1 border border-maroon-800">
         <img id="receiptModalImg" src="" alt="Bukti Transaksi" class="max-h-[65vh] w-auto object-contain rounded-lg">
       </div>
       <div class="flex justify-end pt-1">
-        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl bg-obsidian-surface border border-obsidian-border text-slate-300 text-xs font-semibold">Tutup</button>
+        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl bg-maroon-850 border border-maroon-700 text-slate-300 text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
 
   <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-obsidian-elevated border border-gold-500/40 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-maroon-850 border border-gold-500/50 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
     <i data-lucide="check" class="w-4 h-4 text-gold-400" id="toastIcon"></i>
     <span id="toastMsg">Pesan Notifikasi</span>
   </div>

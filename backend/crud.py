@@ -329,8 +329,8 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
     formatted_date_indo = f"{day_name}, {dt_obj.day} {months_indo[dt_obj.month - 1]} {dt_obj.year}"
 
     wa_lines = [
-        "🪙 *REKAP PENGEMBALIAN MODAL EMAS*",
-        "*NO PUSING PUSING (NPP)*",
+        "👑 *BELI EMAS MAKASSAR*",
+        "🪙 *REKAP PENGEMBALIAN MODAL (NPP)*",
         "━━━━━━━━━━━━━━━━━━━━━━",
         f"📅 Tanggal : {formatted_date_indo}",
         f"💰 Total Modal Ditarik : *{format_rupiah(total_capital)}*",

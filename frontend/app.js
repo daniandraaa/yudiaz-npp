@@ -1,5 +1,6 @@
 /**
- * No Pusing Pusing (NPP) - Client Application Controller
+ * Beli Emas Makassar — No Pusing Pusing (NPP)
+ * Client Application Controller
  * Author: Devera (CTO & Lead Accountant)
  */
 
@@ -25,14 +26,22 @@ function formatRupiah(num) {
 function showToast(message, isSuccess = true) {
   const toast = document.getElementById("toast");
   const msgEl = document.getElementById("toastMsg");
+  const iconEl = document.getElementById("toastIcon");
   if (!toast || !msgEl) return;
+
   msgEl.textContent = message;
+  if (iconEl) {
+    iconEl.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-circle");
+    iconEl.className = isSuccess ? "w-4 h-4 text-gold-400" : "w-4 h-4 text-rose-400";
+    if (window.lucide) lucide.createIcons();
+  }
+
   toast.classList.remove("opacity-0", "translate-y-3");
   toast.classList.add("opacity-100", "translate-y-0");
   setTimeout(() => {
     toast.classList.remove("opacity-100", "translate-y-0");
     toast.classList.add("opacity-0", "translate-y-3");
-  }, 2600);
+  }, 2800);
 }
 
 // ==================== TABS SWITCHER ====================
@@ -62,9 +71,9 @@ function switchTab(tab) {
     const btn = tabBtns[k];
     if (btn) {
       if (k === tab) {
-        btn.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all bg-gold-500 text-obsidian-core shadow-[0_0_12px_rgba(234,179,8,0.3)]";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]";
       } else {
-        btn.className = "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition-all";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all";
       }
     }
   });
@@ -79,7 +88,7 @@ function switchTab(tab) {
     const btn = dockBtns[k];
     if (btn && k !== "input") {
       btn.className = k === tab 
-        ? "flex flex-col items-center gap-1 text-[10px] font-semibold text-gold-400"
+        ? "flex flex-col items-center gap-1 text-[10px] font-bold text-gold-400"
         : "flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white";
     }
   });
@@ -141,10 +150,10 @@ function renderDailyBoard() {
   if (badge) {
     if (board.status === "ACTIVE") {
       badge.textContent = "SESI AKTIF";
-      badge.className = "font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35";
     } else {
       badge.textContent = "BUKU DITUTUP";
-      badge.className = "font-mono text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/30";
+      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40";
     }
   }
 
@@ -172,28 +181,28 @@ function renderDailyBoard() {
     const isZero = po.total_modal === 0;
     const isTaken = po.is_taken;
     
-    // Status visual styles
-    let cardBorder = "border-obsidian-border";
+    // Status visual styles matching Royal Burgundy & Gold Luxury
+    let cardBorder = "border-maroon-700/70 bg-maroon-900/60";
     let statusBadge = "";
     let btnAction = "";
 
     if (isZero) {
-      statusBadge = `<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">TIDAK ADA MODAL</span>`;
-      btnAction = `<div class="text-[11px] font-mono text-slate-500 italic py-1">Tidak keluar modal hari ini</div>`;
+      statusBadge = `<span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-maroon-950 text-slate-400 border border-maroon-700">TIDAK ADA MODAL</span>`;
+      btnAction = `<div class="text-[11px] font-mono text-slate-500 italic py-1 text-center">Tidak keluar modal hari ini</div>`;
     } else if (isTaken) {
-      cardBorder = "border-emerald-500/40 bg-emerald-950/20";
-      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><i data-lucide="check-check" class="w-3 h-3"></i> LUNAS AMBIL CASH</span>`;
+      cardBorder = "border-emerald-500/40 bg-gradient-to-b from-maroon-900/90 to-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
+      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"><i data-lucide="check-check" class="w-3 h-3"></i> LUNAS AMBIL CASH</span>`;
       btnAction = `
-        <button onclick="togglePayout(${po.partner_id}, false)" class="w-full py-2 px-3 rounded-xl bg-obsidian-elevated hover:bg-obsidian-hover border border-obsidian-border text-slate-300 font-mono text-xs flex items-center justify-center gap-1.5 transition-colors">
+        <button onclick="togglePayout(${po.partner_id}, false)" class="w-full py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-800 border border-maroon-700 text-slate-300 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5 transition-colors">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
           <span>Ubah ke Belum Ambil</span>
         </button>
       `;
     } else {
-      cardBorder = "border-gold-500/40 bg-obsidian-card shadow-[0_0_15px_rgba(234,179,8,0.08)]";
-      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse"><i data-lucide="clock" class="w-3 h-3"></i> WAJIB AMBIL CASH</span>`;
+      cardBorder = "border-gold-500/50 bg-gradient-to-b from-maroon-850 to-maroon-900 shadow-[0_0_20px_rgba(212,175,55,0.14)] ring-1 ring-gold-500/30";
+      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-gold-500/15 text-gold-300 border border-gold-500/40 animate-pulse"><i data-lucide="clock" class="w-3 h-3 text-gold-400"></i> WAJIB AMBIL CASH</span>`;
       btnAction = `
-        <button onclick="togglePayout(${po.partner_id}, true)" class="w-full py-2.5 px-3 rounded-xl gold-gradient-bg text-obsidian-core font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(234,179,8,0.3)] active:scale-[0.98] transition-all">
+        <button onclick="togglePayout(${po.partner_id}, true)" class="w-full py-2.5 px-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(212,175,55,0.35)] active:scale-[0.98] transition-all">
           <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
           <span>SUDAH AMBIL CASH ✓</span>
         </button>
@@ -207,21 +216,26 @@ function renderDailyBoard() {
         <div>
           <div class="flex items-start justify-between gap-2 mb-2">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-xs shadow-md" style="background-color: ${po.color}25; color: ${po.color}; border: 1px solid ${po.color}50;">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-extrabold text-xs shadow-md shrink-0" style="background-color: ${po.color}25; color: ${po.color}; border: 1.5px solid ${po.color}60;">
                 ${po.initials}
               </div>
               <div>
                 <h3 class="text-sm font-bold text-white font-sans">${po.name}</h3>
-                <span class="text-[10px] font-mono text-slate-400">${itemsCountText}</span>
+                <span class="text-[10px] font-mono text-amber-200/60">${itemsCountText}</span>
               </div>
             </div>
             <div>${statusBadge}</div>
           </div>
 
-          <div class="my-2.5 p-3 rounded-xl bg-obsidian-surface/80 border border-obsidian-border">
-            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Modal Yang Ditarik:</div>
-            <div class="text-xl font-mono font-extrabold ${isTaken ? 'text-emerald-400' : 'text-gold-400'} mt-0.5">
-              ${formatRupiah(po.total_modal)}
+          <div class="my-2.5 p-3 rounded-xl bg-maroon-950/85 border border-maroon-700/80 flex items-baseline justify-between">
+            <div>
+              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Modal Yang Ditarik:</div>
+              <div class="text-xl sm:text-2xl font-mono font-extrabold ${isTaken ? 'text-emerald-400' : 'gold-metallic-text'} mt-0.5">
+                ${formatRupiah(po.total_modal)}
+              </div>
+            </div>
+            <div class="text-[10px] font-mono text-slate-400 text-right">
+              ${po.transaction_count} transaksi
             </div>
           </div>
         </div>
@@ -262,13 +276,13 @@ function setFundingMode(mode) {
   const containerPatungan = document.getElementById("patunganModeContainer");
 
   if (mode === "solo") {
-    btnSolo.className = "px-2.5 py-1 rounded bg-gold-500 text-obsidian-core font-bold transition-all";
-    btnPatungan.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white transition-all";
+    btnSolo.className = "px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm";
+    btnPatungan.className = "px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all";
     containerSolo.classList.remove("hidden");
     containerPatungan.classList.add("hidden");
   } else {
-    btnSolo.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white transition-all";
-    btnPatungan.className = "px-2.5 py-1 rounded bg-gold-500 text-obsidian-core font-bold transition-all";
+    btnSolo.className = "px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all";
+    btnPatungan.className = "px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm";
     containerSolo.classList.add("hidden");
     containerPatungan.classList.remove("hidden");
     autoSplitEvenly();
@@ -282,17 +296,17 @@ function renderSoloButtons() {
   container.innerHTML = state.partners.map(p => {
     const isSelected = p.id === state.selectedSoloPartnerId;
     const activeClass = isSelected
-      ? "border-gold-500 bg-gold-500/15 text-gold-400 shadow-[0_0_12px_rgba(234,179,8,0.25)] ring-1 ring-gold-500"
-      : "border-obsidian-border bg-obsidian-surface text-slate-300 hover:border-slate-500";
+      ? "border-gold-400 bg-gold-500/15 text-gold-300 shadow-[0_0_16px_rgba(212,175,55,0.25)] ring-1 ring-gold-400"
+      : "border-maroon-700 bg-maroon-950/80 text-slate-300 hover:border-gold-500/40 hover:bg-maroon-850/60";
 
     return `
       <button type="button" onclick="selectSoloPartner(${p.id})" class="p-3 rounded-xl border ${activeClass} flex items-center gap-2.5 text-left transition-all">
-        <div class="w-7 h-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs" style="background-color: ${p.color}25; color: ${p.color}; border: 1px solid ${p.color}40;">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center font-mono font-extrabold text-xs shrink-0" style="background-color: ${p.color}25; color: ${p.color}; border: 1.5px solid ${p.color}60;">
           ${p.initials}
         </div>
         <div class="truncate min-w-0">
-          <div class="text-xs font-bold truncate">${p.name}</div>
-          <div class="text-[9px] font-mono text-slate-400">100% Modal</div>
+          <div class="text-xs font-bold text-white truncate">${p.name}</div>
+          <div class="text-[9px] font-mono text-amber-200/60">100% Modal</div>
         </div>
       </button>
     `;
@@ -313,18 +327,18 @@ function renderPatunganRows() {
     const amountVal = state.patunganAmounts[p.id] || 0;
 
     return `
-      <div class="flex items-center gap-2.5 p-2 rounded-xl bg-obsidian-surface border ${isChecked ? 'border-gold-500/40 bg-gold-500/5' : 'border-obsidian-border'} transition-colors">
-        <label class="flex items-center gap-2 cursor-pointer shrink-0">
+      <div class="flex items-center gap-2.5 p-2.5 rounded-xl border ${isChecked ? 'border-gold-500/50 bg-gold-500/10' : 'border-maroon-700 bg-maroon-950/80'} transition-colors">
+        <label class="flex items-center gap-2.5 cursor-pointer shrink-0">
           <input type="checkbox" onchange="togglePatunganPartner(${p.id}, this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-gold-500 focus:ring-0 accent-gold-500 cursor-pointer">
-          <div class="w-6 h-6 rounded-md flex items-center justify-center font-mono text-[10px] font-bold" style="background-color: ${p.color}25; color: ${p.color};">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center font-mono text-[10px] font-extrabold" style="background-color: ${p.color}25; color: ${p.color}; border: 1px solid ${p.color}50;">
             ${p.initials}
           </div>
           <span class="text-xs font-bold text-white w-24 sm:w-28 truncate">${p.name}</span>
         </label>
 
         <div class="flex-1 relative">
-          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-slate-400">Rp</span>
-          <input type="number" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" class="w-full bg-obsidian-card border border-obsidian-border rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-500 disabled:opacity-40 disabled:cursor-not-allowed">
+          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-gold-400/80">Rp</span>
+          <input type="number" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-400 disabled:opacity-40 disabled:cursor-not-allowed">
         </div>
       </div>
     `;
@@ -411,7 +425,6 @@ function clearAmount() {
   renderPatunganRows();
 }
 
-// ==================== SUBMIT TRANSACTION ====================
 // ==================== RECEIPT AI OCR UPLOAD ====================
 async function handleReceiptUpload(input) {
   if (!input.files || input.files.length === 0) return;
@@ -516,7 +529,7 @@ function clearReceiptUpload() {
   if (promptEl) promptEl.classList.remove("hidden");
   if (badgeEl) {
     badgeEl.textContent = "Auto-Fill Form";
-    badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/30";
+    badgeEl.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40";
   }
 }
 
@@ -533,6 +546,7 @@ function closeReceiptModal() {
   if (modal) modal.classList.add("hidden");
 }
 
+// ==================== SUBMIT TRANSACTION ====================
 async function submitTransaction() {
   if (state.inputAmount <= 0) {
     showToast("Nominal pembelian belum diisi!", false);
@@ -616,43 +630,43 @@ function renderTransactionsList() {
   if (badge) badge.textContent = `${list.length} Transaksi`;
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">Belum ada transaksi pembelian hari ini.</div>`;
+    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian hari ini.</div>`;
     return;
   }
 
   container.innerHTML = list.map(tx => {
     const sharesHtml = tx.shares.map(s => `
-      <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-obsidian-surface border border-obsidian-border">
-        <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${s.partner_color}"></span>
-        <span class="font-bold text-white">${s.partner_name}</span>: ${formatRupiah(s.amount)} (${s.percentage}%)
+      <span class="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-lg bg-maroon-950 border border-maroon-700">
+        <span class="w-2 h-2 rounded-full" style="background-color: ${s.partner_color}"></span>
+        <span class="font-bold text-slate-200">${s.partner_name}</span>: <span class="text-gold-300 font-semibold">${formatRupiah(s.amount)}</span> <span class="text-slate-400">(${s.percentage}%)</span>
       </span>
     `).join(" ");
 
     return `
-      <article class="p-3.5 rounded-xl bg-obsidian-card border border-obsidian-border space-y-2">
+      <article class="p-3.5 rounded-2xl bg-maroon-900/80 border border-gold-500/20 hover:border-gold-500/40 space-y-2.5 transition-colors shadow-sm">
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="flex items-center gap-2">
-              <h4 class="text-xs font-bold text-white">${tx.item_name}</h4>
-              <span class="text-[9px] font-mono text-slate-400">${tx.created_at.substring(11, 16)} WIB</span>
+              <h4 class="text-xs font-bold text-white font-sans">${tx.item_name}</h4>
+              <span class="text-[9px] font-mono text-amber-200/70 bg-maroon-950 px-2 py-0.5 rounded-full border border-maroon-700">${tx.created_at.substring(11, 16)} WIB</span>
             </div>
-            ${tx.notes ? `<p class="text-[11px] text-slate-400 mt-0.5">${tx.notes}</p>` : ''}
+            ${tx.notes ? `<p class="text-[11px] text-slate-400 mt-1">${tx.notes}</p>` : ''}
           </div>
           <div class="flex items-center gap-2">
             ${tx.receipt_image ? `
-              <button onclick="openReceiptModal('/api/v1/receipts/${tx.receipt_image}')" class="text-[10px] font-mono font-bold text-gold-400 hover:text-white px-2 py-1 rounded-lg bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 flex items-center gap-1 transition-all shadow-sm">
+              <button onclick="openReceiptModal('/api/v1/receipts/${tx.receipt_image}')" class="text-[10px] font-mono font-bold text-gold-300 hover:text-white px-2.5 py-1 rounded-lg bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/35 flex items-center gap-1 transition-all shadow-sm">
                 <i data-lucide="image" class="w-3 h-3 text-gold-400"></i>
                 <span>Nota</span>
               </button>
             ` : ''}
-            <span class="text-xs font-mono font-extrabold text-gold-400">${formatRupiah(tx.total_amount)}</span>
-            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1" title="Hapus Transaksi">
+            <span class="text-xs font-mono font-extrabold gold-metallic-text">${formatRupiah(tx.total_amount)}</span>
+            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus Transaksi">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-1.5 pt-1 border-t border-obsidian-border/50">
+        <div class="flex flex-wrap gap-1.5 pt-1.5 border-t border-maroon-750">
           ${sharesHtml}
         </div>
       </article>
@@ -734,9 +748,11 @@ function openSettingsModal() {
   if (!modal || !container) return;
 
   container.innerHTML = state.partners.map(p => `
-    <div class="flex items-center gap-2">
-      <span class="text-xs font-mono font-bold text-slate-400 w-5">#${p.id}</span>
-      <input type="text" id="partnerNameInput_${p.id}" value="${p.name}" class="flex-1 bg-obsidian-surface border border-obsidian-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold-500 font-bold">
+    <div class="flex items-center gap-2 bg-maroon-950 p-2 rounded-xl border border-maroon-700">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center font-mono font-extrabold text-xs shrink-0" style="background-color: ${p.color}25; color: ${p.color}; border: 1.5px solid ${p.color}50;">
+        ${p.initials}
+      </div>
+      <input type="text" id="partnerNameInput_${p.id}" value="${p.name}" class="flex-1 bg-maroon-900 border border-maroon-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gold-400 font-bold" placeholder="Nama Pemodal">
     </div>
   `).join("");
 
