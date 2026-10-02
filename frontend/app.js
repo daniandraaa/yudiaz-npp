@@ -221,9 +221,54 @@ function renderDailyBoard() {
   document.getElementById("heroTotalCapital").textContent = formatRupiah(board.total_capital);
   document.getElementById("heroTotalTrx").textContent = `${board.total_transactions} trx`;
 
-  // Count settled
-  const settledCount = board.payouts.filter(p => p.is_taken || p.total_modal === 0).length;
-  document.getElementById("heroSettledCount").textContent = `${settledCount} / 7 Lunas`;
+  // Dynamic Partner counts
+  const totalPartnerCount = board.payouts ? board.payouts.length : (state.partners.length || 7);
+  const settledCount = board.payouts ? board.payouts.filter(p => p.is_taken || p.total_modal === 0).length : 0;
+  
+  const heroSettledEl = document.getElementById("heroSettledCount");
+  if (heroSettledEl) heroSettledEl.textContent = `${settledCount} / ${totalPartnerCount} Lunas`;
+
+  const payoutBadgeEl = document.getElementById("payoutPartnerCountBadge");
+  if (payoutBadgeEl) payoutBadgeEl.textContent = `${totalPartnerCount} Pemodal Emas`;
+
+  // Render Sales & Profit Card
+  const salesCapEl = document.getElementById("salesCardCapital");
+  if (salesCapEl) salesCapEl.textContent = formatRupiah(board.total_capital);
+
+  const salesRevEl = document.getElementById("salesCardRevenue");
+  const salesProfEl = document.getElementById("salesCardProfit");
+  const salesBadgeEl = document.getElementById("salesProfitBadge");
+  const btnSalesTxt = document.getElementById("btnSalesActionText");
+
+  if (board.sales_revenue && board.sales_revenue > 0) {
+    if (salesRevEl) salesRevEl.textContent = formatRupiah(board.sales_revenue);
+    if (btnSalesTxt) btnSalesTxt.textContent = "Ubah Hasil Jual";
+    
+    const profitSign = board.net_profit >= 0 ? "+" : "";
+    if (salesProfEl) {
+      salesProfEl.textContent = `${profitSign}${formatRupiah(board.net_profit)}`;
+      salesProfEl.className = board.net_profit >= 0 
+        ? "text-base sm:text-lg font-mono font-extrabold text-emerald-400 mt-1" 
+        : "text-base sm:text-lg font-mono font-extrabold text-rose-400 mt-1";
+    }
+    if (salesBadgeEl) {
+      salesBadgeEl.textContent = `${profitSign}${board.profit_percentage}%`;
+      salesBadgeEl.className = board.net_profit >= 0
+        ? "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+        : "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40";
+    }
+  } else {
+    if (salesRevEl) salesRevEl.innerHTML = `<span class="text-slate-500 italic text-xs font-normal">Belum diinput</span>`;
+    if (btnSalesTxt) btnSalesTxt.textContent = "Input Hasil Jual Sore";
+    if (salesProfEl) {
+      salesProfEl.innerHTML = `<span class="text-slate-500 italic text-xs font-normal">Menunggu Penjualan Sore</span>`;
+      salesProfEl.className = "text-base sm:text-lg font-mono font-extrabold text-slate-400 mt-1";
+    }
+    if (salesBadgeEl) {
+      salesBadgeEl.textContent = "0%";
+      salesBadgeEl.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-maroon-900 text-slate-400 border border-maroon-750";
+    }
+  }
 
   // Calculate percentage of settled money
   let settledMoney = 0;
@@ -910,15 +955,32 @@ function renderHistoryList() {
           <div>${statusPill}</div>
         </div>
 
-        <div class="flex items-center justify-between p-3 rounded-xl bg-maroon-950/80 border border-maroon-700/80">
-          <span class="text-xs text-slate-400">Total Modal Sesi:</span>
-          <span class="text-base sm:text-lg font-mono font-extrabold gold-metallic-text">${item.total_capital_formatted}</span>
+        <!-- Metrics Grid: Modal, Jual, Laba -->
+        <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-maroon-950/80 border border-maroon-700/80 text-xs font-mono">
+          <div>
+            <div class="text-[9px] text-slate-400 uppercase">Modal:</div>
+            <div class="font-extrabold text-slate-200 text-xs sm:text-sm mt-0.5 truncate">${item.total_capital_formatted}</div>
+          </div>
+          <div>
+            <div class="text-[9px] text-gold-400 uppercase">Hasil Jual:</div>
+            <div class="font-extrabold gold-metallic-text text-xs sm:text-sm mt-0.5 truncate">${item.sales_revenue > 0 ? item.sales_revenue_formatted : '-'}</div>
+          </div>
+          <div>
+            <div class="text-[9px] text-emerald-400 uppercase">Keuntungan:</div>
+            <div class="font-extrabold ${item.sales_revenue > 0 ? (item.net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'} text-xs sm:text-sm mt-0.5 truncate">
+              ${item.sales_revenue > 0 ? `${item.net_profit >= 0 ? '+' : ''}${item.net_profit_formatted}` : '<span class="italic text-[10px]">Belum diinput</span>'}
+            </div>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
+          <button type="button" onclick="openSalesModal('${item.date_str}')" class="py-2 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/35 text-gold-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm" title="Input atau Edit Hasil Penjualan Sore">
+            <i data-lucide="circle-dollar-sign" class="w-3.5 h-3.5"></i>
+            <span>${item.sales_revenue > 0 ? 'Ubah Jual' : 'Input Jual'}</span>
+          </button>
           <button type="button" onclick="openHistoryDetail('${item.date_str}')" class="flex-1 py-2 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/30 text-amber-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
             <i data-lucide="eye" class="w-3.5 h-3.5 text-gold-400"></i>
-            <span>Lihat Rincian Sesi</span>
+            <span>Rincian Sesi</span>
           </button>
           <button type="button" onclick="copyHistoryWA('${item.date_str}')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]">
             <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
@@ -1046,18 +1108,171 @@ function copySpecificHistoryWA() {
   }
 }
 
-// ==================== SETTINGS (PARTNER NAMES) ====================
+// ==================== SALES REVENUE & PROFIT MODAL ====================
+let salesModalTargetDate = null;
+let salesModalTargetCapital = 0;
+
+async function openSalesModal(dateStr = null) {
+  const modal = document.getElementById("modalSales");
+  if (!modal) return;
+
+  salesModalTargetDate = dateStr;
+  let revenue = 0;
+  let notes = "";
+  let capital = 0;
+
+  if (dateStr) {
+    const histItem = (state.historyList || []).find(h => h.date_str === dateStr);
+    if (histItem) {
+      capital = histItem.total_capital || 0;
+      revenue = histItem.sales_revenue || 0;
+      notes = histItem.sales_notes || "";
+    } else {
+      try {
+        const res = await fetch(`/api/v1/history/${dateStr}`);
+        const data = await res.json();
+        if (data.success && data.data && data.data.board) {
+          capital = data.data.board.total_capital || 0;
+          revenue = data.data.board.sales_revenue || 0;
+          notes = data.data.board.sales_notes || "";
+        }
+      } catch (e) {}
+    }
+  } else {
+    if (state.dailyBoard) {
+      salesModalTargetDate = state.dailyBoard.day_date;
+      capital = state.dailyBoard.total_capital || 0;
+      revenue = state.dailyBoard.sales_revenue || 0;
+      notes = state.dailyBoard.sales_notes || "";
+    }
+  }
+
+  salesModalTargetCapital = capital;
+  const targetCapEl = document.getElementById("modalInputTargetCapital");
+  if (targetCapEl) targetCapEl.textContent = formatRupiah(capital);
+  
+  const revInput = document.getElementById("inputSalesRevenue");
+  if (revInput) revInput.value = revenue > 0 ? revenue : "";
+
+  const notesInput = document.getElementById("inputSalesNotes");
+  if (notesInput) notesInput.value = notes || "";
+
+  updateSalesCalculationPreview();
+  modal.classList.remove("hidden");
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeSalesModal() {
+  const modal = document.getElementById("modalSales");
+  if (modal) modal.classList.add("hidden");
+}
+
+function addSalesAmount(val) {
+  const input = document.getElementById("inputSalesRevenue");
+  if (!input) return;
+  const current = parseFloat(input.value) || 0;
+  input.value = current + val;
+  updateSalesCalculationPreview();
+}
+
+function resetSalesAmount() {
+  const input = document.getElementById("inputSalesRevenue");
+  if (!input) return;
+  input.value = "";
+  updateSalesCalculationPreview();
+}
+
+function updateSalesCalculationPreview() {
+  const input = document.getElementById("inputSalesRevenue");
+  const rev = parseFloat(input ? input.value : 0) || 0;
+  
+  const prevEl = document.getElementById("formattedSalesPreview");
+  if (prevEl) prevEl.textContent = formatRupiah(rev);
+
+  const capital = salesModalTargetCapital;
+  const formulaEl = document.getElementById("salesModalFormulaText");
+  if (formulaEl) formulaEl.textContent = `${formatRupiah(rev)} - ${formatRupiah(capital)}`;
+
+  const profit = rev - capital;
+  const pct = capital > 0 ? ((profit / capital) * 100).toFixed(1) : "0";
+  const profitSign = profit >= 0 ? "+" : "";
+
+  const profitResEl = document.getElementById("salesModalProfitResult");
+  const profitPctEl = document.getElementById("salesModalProfitPct");
+
+  if (profitResEl) {
+    profitResEl.textContent = `${profitSign}${formatRupiah(profit)}`;
+    profitResEl.className = profit >= 0 
+      ? "text-base font-mono font-extrabold text-emerald-400" 
+      : "text-base font-mono font-extrabold text-rose-400";
+  }
+  if (profitPctEl) {
+    profitPctEl.textContent = `(${profitSign}${pct}%)`;
+    profitPctEl.className = profit >= 0 
+      ? "text-[10px] font-mono text-emerald-300" 
+      : "text-[10px] font-mono text-rose-300";
+  }
+}
+
+async function saveSalesRevenue() {
+  const input = document.getElementById("inputSalesRevenue");
+  const rev = parseFloat(input ? input.value : 0) || 0;
+  const notes = document.getElementById("inputSalesNotes")?.value?.trim() || "";
+
+  if (rev <= 0) {
+    showToast("Nominal hasil penjualan belum diisi!", false);
+    return;
+  }
+
+  const queryDate = salesModalTargetDate ? `?date=${encodeURIComponent(salesModalTargetDate)}` : "";
+
+  try {
+    const res = await fetch(`/api/v1/day/sales${queryDate}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sales_revenue: rev, sales_notes: notes })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || "Hasil penjualan & keuntungan berhasil disimpan!");
+      closeSalesModal();
+      await loadAllData();
+      if (state.currentTab === "history") {
+        await loadHistoryData();
+      }
+    } else {
+      showToast(data.detail || "Gagal menyimpan hasil jual", false);
+    }
+  } catch (err) {
+    showToast("Gagal menghubungi server", false);
+  }
+}
+
+// ==================== SETTINGS (PARTNER MANAGEMENT & ADD PARTNER) ====================
 function openSettingsModal() {
   const modal = document.getElementById("modalSettings");
   const container = document.getElementById("settingsPartnersList");
   if (!modal || !container) return;
 
+  const count = state.partners.length;
+  const titleEl = document.getElementById("modalSettingsTitle");
+  if (titleEl) titleEl.textContent = `PENGATURAN PEMODAL EMAS (${count} Anggota)`;
+
+  const countTextEl = document.getElementById("settingsPartnerCountText");
+  if (countTextEl) countTextEl.textContent = `${count} Pemodal Aktif`;
+
+  const newPartnerInput = document.getElementById("newPartnerName");
+  if (newPartnerInput) newPartnerInput.value = "";
+
   container.innerHTML = state.partners.map(p => `
-    <div class="flex items-center gap-2 bg-maroon-950 p-2 rounded-xl border border-maroon-700">
+    <div class="flex items-center gap-2 bg-maroon-950 p-2.5 rounded-xl border border-maroon-700">
       <div class="w-8 h-8 rounded-lg flex items-center justify-center font-mono font-extrabold text-xs shrink-0" style="background-color: ${p.color}25; color: ${p.color}; border: 1.5px solid ${p.color}50;">
         ${p.initials}
       </div>
       <input type="text" id="partnerNameInput_${p.id}" value="${p.name}" class="flex-1 bg-maroon-900 border border-maroon-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gold-400 font-bold" placeholder="Nama Pemodal">
+      <button type="button" onclick="deletePartner(${p.id}, '${p.name}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus / Nonaktifkan Pemodal">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+      </button>
     </div>
   `).join("");
 
@@ -1070,8 +1285,55 @@ function closeSettingsModal() {
   if (modal) modal.classList.add("hidden");
 }
 
+async function addNewPartner() {
+  const input = document.getElementById("newPartnerName");
+  const name = input ? input.value.trim() : "";
+  if (!name) {
+    showToast("Nama pemodal baru wajib diisi!", false);
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/v1/partners", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Pemodal ${name} berhasil ditambahkan!`);
+      if (input) input.value = "";
+      await loadAllData();
+      openSettingsModal(); // Refresh list inside modal
+    } else {
+      showToast(data.detail || "Gagal menambahkan pemodal", false);
+    }
+  } catch (err) {
+    showToast("Gagal menyambung ke server", false);
+  }
+}
+
+async function deletePartner(partnerId, partnerName) {
+  if (!confirm(`Hapus / nonaktifkan pemodal "${partnerName}" dari sistem kasir?`)) return;
+
+  try {
+    const res = await fetch(`/api/v1/partners/${partnerId}`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || `Pemodal ${partnerName} berhasil dihapus.`);
+      await loadAllData();
+      openSettingsModal(); // Refresh modal
+    } else {
+      showToast(data.detail || "Gagal menghapus pemodal", false);
+    }
+  } catch (err) {
+    showToast("Gagal menyambung ke server", false);
+  }
+}
+
 async function saveAllPartnerSettings() {
   try {
+    let updatedCount = 0;
     for (const p of state.partners) {
       const input = document.getElementById(`partnerNameInput_${p.id}`);
       if (input && input.value.trim() && input.value.trim() !== p.name) {
@@ -1080,10 +1342,11 @@ async function saveAllPartnerSettings() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: input.value.trim() })
         });
+        updatedCount++;
       }
     }
     closeSettingsModal();
-    showToast("Nama-nama pemodal berhasil diperbarui!");
+    showToast(updatedCount > 0 ? "Nama-nama pemodal berhasil diperbarui!" : "Tidak ada perubahan nama.");
     loadAllData();
   } catch (err) {
     showToast("Gagal menyimpan nama pemodal", false);
