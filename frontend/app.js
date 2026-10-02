@@ -1117,11 +1117,83 @@ function copySpecificHistoryWA() {
   }
 }
 
-// ==================== SALES REVENUE & PROFIT MODAL ====================
+// ==================== SALES REVENUE & PROFIT (MODAL & INLINE CARD) ====================
 let salesModalTargetDate = null;
 let salesModalTargetCapital = 0;
 
+function updateInlineSalesCalc() {
+  const input = document.getElementById("inlineInputSales");
+  const rev = parseFloat(input ? input.value : 0) || 0;
+  const capital = state.dailyBoard ? state.dailyBoard.total_capital : 0;
+  
+  const previewEl = document.getElementById("inlineProfitPreview");
+  if (!previewEl) return;
+  
+  if (rev <= 0) {
+    previewEl.innerHTML = `<span class="text-slate-400 font-normal italic text-[11px]">Masukkan angka jual di atas</span>`;
+    return;
+  }
+  
+  const profit = rev - capital;
+  const pct = capital > 0 ? ((profit / capital) * 100).toFixed(1) : "0";
+  const profitSign = profit >= 0 ? "+" : "";
+  
+  previewEl.textContent = `Keuntungan: ${profitSign}${formatRupiah(profit)} (${profitSign}${pct}%)`;
+  previewEl.className = profit >= 0 ? "text-xs font-mono font-bold text-emerald-400" : "text-xs font-mono font-bold text-rose-400";
+}
+
+function addInlineSales(val) {
+  const input = document.getElementById("inlineInputSales");
+  if (!input) return;
+  const cur = parseFloat(input.value) || 0;
+  input.value = cur + val;
+  updateInlineSalesCalc();
+}
+
+function resetInlineSales() {
+  const input = document.getElementById("inlineInputSales");
+  if (!input) return;
+  input.value = "";
+  updateInlineSalesCalc();
+}
+
+async function saveInlineSales() {
+  const input = document.getElementById("inlineInputSales");
+  const rev = parseFloat(input ? input.value : 0) || 0;
+  if (rev <= 0) {
+    showToast("Nominal hasil penjualan belum diisi!", false);
+    if (input) input.focus();
+    return;
+  }
+  
+  try {
+    const res = await fetch("/api/v1/day/sales", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sales_revenue: rev, sales_notes: "Input penjualan kasir sore" })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || "Hasil penjualan & laba berhasil disimpan!");
+      await loadAllData();
+    } else {
+      showToast(data.detail || "Gagal menyimpan hasil jual", false);
+    }
+  } catch (err) {
+    showToast("Gagal menghubungi server", false);
+  }
+}
+
 async function openSalesModal(dateStr = null) {
+  // If opening for current session, also focus and scroll to the inline form on the card
+  if (!dateStr) {
+    const inlineInput = document.getElementById("inlineInputSales");
+    if (inlineInput) {
+      inlineInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => inlineInput.focus(), 300);
+    }
+  }
+
   const modal = document.getElementById("modalSales");
   if (!modal) return;
 
@@ -1167,13 +1239,17 @@ async function openSalesModal(dateStr = null) {
   if (notesInput) notesInput.value = notes || "";
 
   updateSalesCalculationPreview();
+  modal.style.display = "flex";
   modal.classList.remove("hidden");
   if (window.lucide) lucide.createIcons();
 }
 
 function closeSalesModal() {
   const modal = document.getElementById("modalSales");
-  if (modal) modal.classList.add("hidden");
+  if (modal) {
+    modal.style.display = "none";
+    modal.classList.add("hidden");
+  }
 }
 
 function addSalesAmount(val) {
@@ -1285,13 +1361,17 @@ function openSettingsModal() {
     </div>
   `).join("");
 
+  modal.style.display = "flex";
   modal.classList.remove("hidden");
   if (window.lucide) lucide.createIcons();
 }
 
 function closeSettingsModal() {
   const modal = document.getElementById("modalSettings");
-  if (modal) modal.classList.add("hidden");
+  if (modal) {
+    modal.style.display = "none";
+    modal.classList.add("hidden");
+  }
 }
 
 async function addNewPartner() {
@@ -1361,6 +1441,23 @@ async function saveAllPartnerSettings() {
     showToast("Gagal menyimpan nama pemodal", false);
   }
 }
+
+// Global browser window exports for event handlers
+window.openSalesModal = openSalesModal;
+window.closeSalesModal = closeSalesModal;
+window.addSalesAmount = addSalesAmount;
+window.resetSalesAmount = resetSalesAmount;
+window.saveSalesRevenue = saveSalesRevenue;
+window.updateSalesCalculationPreview = updateSalesCalculationPreview;
+window.addInlineSales = addInlineSales;
+window.resetInlineSales = resetInlineSales;
+window.saveInlineSales = saveInlineSales;
+window.updateInlineSalesCalc = updateInlineSalesCalc;
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.addNewPartner = addNewPartner;
+window.deletePartner = deletePartner;
+window.saveAllPartnerSettings = saveAllPartnerSettings;
 
 // Boot application
 window.addEventListener("DOMContentLoaded", () => {
