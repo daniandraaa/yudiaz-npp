@@ -18,7 +18,51 @@ let state = {
   inputAmount: 0,
   uploadedReceiptFilename: null,
   uploadedReceiptUrl: null,
+  selectedGoldCategory: "LM",
 };
+
+function setGoldCategory(cat) {
+  state.selectedGoldCategory = cat === "NON_LM" ? "NON_LM" : "LM";
+  const btnLM = document.getElementById("btnCatLM");
+  const btnNonLM = document.getElementById("btnCatNON_LM");
+  const checkLM = document.getElementById("checkCatLM");
+  const checkNonLM = document.getElementById("checkCatNON_LM");
+  const hiddenInput = document.getElementById("selectedGoldCategory");
+
+  if (hiddenInput) hiddenInput.value = state.selectedGoldCategory;
+
+  if (state.selectedGoldCategory === "LM") {
+    if (btnLM) {
+      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-gold-400 bg-gradient-to-r from-gold-500/25 to-maroon-900 text-left transition-all shadow-md";
+    }
+    if (checkLM) {
+      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-gold-400 text-maroon-950 flex items-center justify-center text-[10px] font-extrabold shadow-sm";
+      checkLM.textContent = "✓";
+    }
+    if (btnNonLM) {
+      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-maroon-700 bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
+    }
+    if (checkNonLM) {
+      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
+      checkNonLM.textContent = "✓";
+    }
+  } else {
+    if (btnLM) {
+      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-maroon-700 bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
+    }
+    if (checkLM) {
+      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
+      checkLM.textContent = "✓";
+    }
+    if (btnNonLM) {
+      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-rose-400 bg-gradient-to-r from-rose-500/25 to-maroon-900 text-left transition-all shadow-md";
+    }
+    if (checkNonLM) {
+      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-rose-400 text-white flex items-center justify-center text-[10px] font-extrabold shadow-sm";
+      checkNonLM.textContent = "✓";
+    }
+  }
+}
 
 function formatRupiah(num) {
   if (isNaN(num) || num === null || num === undefined) return "Rp 0";
@@ -270,13 +314,56 @@ function renderDailyBoard() {
     }
   }
 
+  // Update Category Breakdown on Card (LM vs Non-LM)
+  const badgeLM = document.getElementById("badgeTrxLM");
+  if (badgeLM) badgeLM.textContent = `${board.total_trx_lm || 0} trx`;
+  const capLM = document.getElementById("cardCapLM");
+  if (capLM) capLM.textContent = formatRupiah(board.total_capital_lm || 0);
+  const revLM = document.getElementById("cardRevLM");
+  if (revLM) revLM.textContent = (board.sales_revenue_lm && board.sales_revenue_lm > 0) ? formatRupiah(board.sales_revenue_lm) : "-";
+  const profLM = document.getElementById("cardProfLM");
+  if (profLM) {
+    if (board.sales_revenue_lm && board.sales_revenue_lm > 0) {
+      const pSign = board.profit_lm >= 0 ? "+" : "";
+      profLM.textContent = `${pSign}${formatRupiah(board.profit_lm)} (${pSign}${board.profit_pct_lm}%)`;
+      profLM.className = board.profit_lm >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
+    } else {
+      profLM.textContent = "-";
+      profLM.className = "font-extrabold text-slate-500";
+    }
+  }
+
+  const badgeNonLM = document.getElementById("badgeTrxNonLM");
+  if (badgeNonLM) badgeNonLM.textContent = `${board.total_trx_non_lm || 0} trx`;
+  const capNonLM = document.getElementById("cardCapNonLM");
+  if (capNonLM) capNonLM.textContent = formatRupiah(board.total_capital_non_lm || 0);
+  const revNonLM = document.getElementById("cardRevNonLM");
+  if (revNonLM) revNonLM.textContent = (board.sales_revenue_non_lm && board.sales_revenue_non_lm > 0) ? formatRupiah(board.sales_revenue_non_lm) : "-";
+  const profNonLM = document.getElementById("cardProfNonLM");
+  if (profNonLM) {
+    if (board.sales_revenue_non_lm && board.sales_revenue_non_lm > 0) {
+      const pSign = board.profit_non_lm >= 0 ? "+" : "";
+      profNonLM.textContent = `${pSign}${formatRupiah(board.profit_non_lm)} (${pSign}${board.profit_pct_non_lm}%)`;
+      profNonLM.className = board.profit_non_lm >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
+    } else {
+      profNonLM.textContent = "-";
+      profNonLM.className = "font-extrabold text-slate-500";
+    }
+  }
+
   // Update Inline Sales Card Inputs
   const inlineCapEl = document.getElementById("inlineSalesCapText");
-  if (inlineCapEl) inlineCapEl.textContent = `Modal: ${formatRupiah(board.total_capital)}`;
-  const inlineInput = document.getElementById("inlineInputSales");
-  if (inlineInput && !inlineInput.value && board.sales_revenue > 0) {
-    inlineInput.value = board.sales_revenue;
-  }
+  if (inlineCapEl) inlineCapEl.textContent = `Total Modal: ${formatRupiah(board.total_capital)}`;
+  const inlineCapLM = document.getElementById("inlineCapLMText");
+  if (inlineCapLM) inlineCapLM.textContent = `Modal LM: ${formatRupiah(board.total_capital_lm || 0)}`;
+  const inlineCapNonLM = document.getElementById("inlineCapNonLMText");
+  if (inlineCapNonLM) inlineCapNonLM.textContent = `Modal Non-LM: ${formatRupiah(board.total_capital_non_lm || 0)}`;
+
+  const inLM = document.getElementById("inlineInputSalesLM");
+  if (inLM && !inLM.value && board.sales_revenue_lm > 0) inLM.value = board.sales_revenue_lm;
+  const inNonLM = document.getElementById("inlineInputSalesNonLM");
+  if (inNonLM && !inNonLM.value && board.sales_revenue_non_lm > 0) inNonLM.value = board.sales_revenue_non_lm;
+
   updateInlineSalesCalc();
 
   // Calculate percentage of settled money
@@ -711,8 +798,11 @@ async function submitTransaction() {
     }
   }
 
+  const goldCat = state.selectedGoldCategory || "LM";
+
   const payload = {
     item_name: itemName || undefined,
+    gold_category: goldCat,
     total_amount: state.inputAmount,
     shares: shares,
     notes: notes || undefined,
@@ -735,6 +825,7 @@ async function submitTransaction() {
       showToast("Transaksi pembelian berhasil dicatat!");
       clearAmount();
       clearReceiptUpload();
+      setGoldCategory("LM");
       document.getElementById("inputItemName").value = "";
       document.getElementById("inputNotes").value = "";
       await loadAllData();
@@ -780,6 +871,9 @@ function renderTransactionsList() {
           <div>
             <div class="flex items-center gap-2">
               <h4 class="text-xs font-bold text-white font-sans">${tx.item_name}</h4>
+              ${tx.gold_category === "NON_LM" 
+                ? '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-rose-300 bg-rose-500/15 border border-rose-500/35 px-2 py-0.5 rounded-full">💍 Non-LM</span>'
+                : '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-gold-300 bg-gold-500/15 border border-gold-500/35 px-2 py-0.5 rounded-full">🪙 LM</span>'}
               <span class="text-[9px] font-mono text-amber-200/70 bg-maroon-950 px-2 py-0.5 rounded-full border border-maroon-700">${tx.created_at.substring(11, 16)} WIB</span>
             </div>
             ${tx.notes ? `<p class="text-[11px] text-slate-400 mt-1">${tx.notes}</p>` : ''}

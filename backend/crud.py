@@ -474,7 +474,7 @@ def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResp
     cursor = conn.cursor()
 
     t_rows = cursor.execute(
-        "SELECT id, day_date, item_name, total_amount, notes, receipt_image, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
+        "SELECT id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
         (target,)
     ).fetchall()
 
@@ -514,6 +514,7 @@ def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResp
                 id=tr["id"],
                 day_date=tr["day_date"],
                 item_name=tr["item_name"],
+                gold_category=tr["gold_category"] or "LM",
                 total_amount=tr["total_amount"],
                 shares=shares,
                 notes=tr["notes"],
@@ -530,7 +531,7 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
     cursor = conn.cursor()
 
     if target_date:
-        cursor.execute("SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_notes, sold_at FROM days WHERE date_str = ?;", (target_date,))
+        cursor.execute("SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE date_str = ?;", (target_date,))
         row = cursor.fetchone()
         if not row:
             conn.close()
@@ -578,6 +579,16 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
                 total_capital=0.0,
                 total_transactions=0,
                 sales_revenue=0.0,
+                sales_revenue_lm=0.0,
+                sales_revenue_non_lm=0.0,
+                total_capital_lm=0.0,
+                total_capital_non_lm=0.0,
+                total_trx_lm=0,
+                total_trx_non_lm=0,
+                profit_lm=0.0,
+                profit_pct_lm=0.0,
+                profit_non_lm=0.0,
+                profit_pct_non_lm=0.0,
                 net_profit=0.0,
                 profit_percentage=0.0,
                 sales_notes=None,
@@ -597,10 +608,42 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
     total_trx = tot_row[0]
     total_capital = float(tot_row[1])
 
-    # 2. Bulk Sales & Net Profit
+    # Breakdown by category
+    cat_rows = cursor.execute(
+        "SELECT gold_category, COUNT(*), COALESCE(SUM(total_amount), 0) FROM transactions WHERE day_date = ? GROUP BY gold_category;",
+        (day_date,)
+    ).fetchall()
+    total_capital_lm = 0.0
+    total_trx_lm = 0
+    total_capital_non_lm = 0.0
+    total_trx_non_lm = 0
+    for cr in cat_rows:
+        gcat = cr[0]
+        cnt = cr[1]
+        amt = float(cr[2])
+        if gcat == "NON_LM":
+            total_capital_non_lm += amt
+            total_trx_non_lm += cnt
+        else:
+            total_capital_lm += amt
+            total_trx_lm += cnt
+
+    # 2. Bulk Sales & Net Profit (LM, Non-LM, & Total)
     sales_rev = float(day_info.get("sales_revenue") or 0.0)
+    sales_rev_lm = float(day_info.get("sales_revenue_lm") or 0.0)
+    sales_rev_non_lm = float(day_info.get("sales_revenue_non_lm") or 0.0)
+    if sales_rev_lm > 0 or sales_rev_non_lm > 0:
+        sales_rev = sales_rev_lm + sales_rev_non_lm
+
     sales_notes = day_info.get("sales_notes")
     sold_at = day_info.get("sold_at")
+
+    profit_lm = sales_rev_lm - total_capital_lm if sales_rev_lm > 0 else 0.0
+    profit_pct_lm = round((profit_lm / total_capital_lm) * 100.0, 2) if total_capital_lm > 0 and sales_rev_lm > 0 else 0.0
+
+    profit_non_lm = sales_rev_non_lm - total_capital_non_lm if sales_rev_non_lm > 0 else 0.0
+    profit_pct_non_lm = round((profit_non_lm / total_capital_non_lm) * 100.0, 2) if total_capital_non_lm > 0 and sales_rev_non_lm > 0 else 0.0
+
     net_profit = sales_rev - total_capital if sales_rev > 0 else 0.0
     profit_pct = round((net_profit / total_capital) * 100.0, 2) if total_capital > 0 and sales_rev > 0 else 0.0
 
@@ -682,20 +725,54 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
         "🪙 *REKAP KASIR & PENJUALAN EMAS (NPP)*",
         "━━━━━━━━━━━━━━━━━━━━━━",
         f"📅 Sesi : {formatted_date_indo}",
-        f"💰 Total Modal Keluar : *{format_rupiah(total_capital)}*",
+        f"💰 Total Modal Beli : *{format_rupiah(total_capital)}* ({total_trx} transaksi)",
+        "",
+        "📊 *RINCIAN KATEGORI EMAS:*",
+        f"• 🪙 *Logam Mulia (LM)* :",
+        f"  - Modal Beli : {format_rupiah(total_capital_lm)} ({total_trx_lm} trx)",
     ]
+
+    if sales_rev_lm > 0:
+        p_sign_lm = "+" if profit_lm >= 0 else ""
+        wa_lines.extend([
+            f"  - Hasil Jual : *{format_rupiah(sales_rev_lm)}*",
+            f"  - Laba LM    : *{p_sign_lm}{format_rupiah(profit_lm)} ({p_sign_lm}{profit_pct_lm}%)*",
+        ])
+    else:
+        wa_lines.append("  - Hasil Jual : _[Belum Diinput]_")
+
+    wa_lines.extend([
+        "",
+        f"• 💍 *Non-LM (Perhiasan)* :",
+        f"  - Modal Beli : {format_rupiah(total_capital_non_lm)} ({total_trx_non_lm} trx)",
+    ])
+
+    if sales_rev_non_lm > 0:
+        p_sign_nlm = "+" if profit_non_lm >= 0 else ""
+        wa_lines.extend([
+            f"  - Hasil Jual : *{format_rupiah(sales_rev_non_lm)}*",
+            f"  - Laba Non-LM: *{p_sign_nlm}{format_rupiah(profit_non_lm)} ({p_sign_nlm}{profit_pct_non_lm}%)*",
+        ])
+    else:
+        wa_lines.append("  - Hasil Jual : _[Belum Diinput]_")
+
+    wa_lines.extend([
+        "━━━━━━━━━━━━━━━━━━━━━━",
+        "💎 *TOTAL KONSOLIDASI:*",
+    ])
 
     if sales_rev > 0:
         profit_sign = "+" if net_profit >= 0 else ""
         wa_lines.extend([
-            f"💵 Hasil Penjualan Sore : *{format_rupiah(sales_rev)}*",
-            f"💎 *KEUNTUNGAN BERSIH : {format_rupiah(net_profit)} ({profit_sign}{profit_pct}%)*",
+            f"• Total Modal Keluar : *{format_rupiah(total_capital)}*",
+            f"• Total Hasil Jual   : *{format_rupiah(sales_rev)}*",
+            f"• *TOTAL LABA BERSIH  : {format_rupiah(net_profit)} ({profit_sign}{profit_pct}%)*",
         ])
     else:
-        wa_lines.append("💵 Hasil Penjualan Sore : _[Belum Diinput]_")
+        wa_lines.append(f"• Total Modal Keluar : *{format_rupiah(total_capital)}*")
+        wa_lines.append("• Total Hasil Jual   : _[Belum Diinput]_")
 
     wa_lines.extend([
-        f"📦 Total Transaksi Beli : {total_trx} transaksi",
         "━━━━━━━━━━━━━━━━━━━━━━",
         "",
         "📋 *PENGEMBALIAN MODAL POKOK (100% UTUH):*",
@@ -731,6 +808,16 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
         total_capital=total_capital,
         total_transactions=total_trx,
         sales_revenue=sales_rev,
+        sales_revenue_lm=sales_rev_lm,
+        sales_revenue_non_lm=sales_rev_non_lm,
+        total_capital_lm=total_capital_lm,
+        total_capital_non_lm=total_capital_non_lm,
+        total_trx_lm=total_trx_lm,
+        total_trx_non_lm=total_trx_non_lm,
+        profit_lm=profit_lm,
+        profit_pct_lm=profit_pct_lm,
+        profit_non_lm=profit_non_lm,
+        profit_pct_non_lm=profit_pct_non_lm,
         net_profit=net_profit,
         profit_percentage=profit_pct,
         sales_notes=sales_notes,
@@ -750,6 +837,16 @@ def _get_empty_closed_board() -> DailyBoardResponse:
         total_capital=0.0,
         total_transactions=0,
         sales_revenue=0.0,
+        sales_revenue_lm=0.0,
+        sales_revenue_non_lm=0.0,
+        total_capital_lm=0.0,
+        total_capital_non_lm=0.0,
+        total_trx_lm=0,
+        total_trx_non_lm=0,
+        profit_lm=0.0,
+        profit_pct_lm=0.0,
+        profit_non_lm=0.0,
+        profit_pct_non_lm=0.0,
         net_profit=0.0,
         profit_percentage=0.0,
         sales_notes=None,
@@ -769,10 +866,14 @@ def get_history_summary() -> List[Dict[str, Any]]:
             d.opened_at,
             d.closed_at,
             d.sales_revenue,
+            d.sales_revenue_lm,
+            d.sales_revenue_non_lm,
             d.sales_notes,
             d.sold_at,
             COUNT(t.id) as total_trx,
-            COALESCE(SUM(t.total_amount), 0) as total_capital
+            COALESCE(SUM(t.total_amount), 0) as total_capital,
+            COALESCE(SUM(CASE WHEN t.gold_category = 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_non_lm,
+            COALESCE(SUM(CASE WHEN t.gold_category != 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_lm
         FROM days d
         LEFT JOIN transactions t ON d.date_str = t.day_date
         GROUP BY d.date_str
@@ -793,9 +894,23 @@ def get_history_summary() -> List[Dict[str, Any]]:
                 c_str = c_at
 
         sales_r = float(r["sales_revenue"] or 0.0)
+        sales_r_lm = float(r["sales_revenue_lm"] or 0.0)
+        sales_r_non_lm = float(r["sales_revenue_non_lm"] or 0.0)
+        if sales_r_lm > 0 or sales_r_non_lm > 0:
+            sales_r = sales_r_lm + sales_r_non_lm
+
         tot_cap = float(r["total_capital"] or 0.0)
+        tot_cap_lm = float(r["total_capital_lm"] or 0.0)
+        tot_cap_non_lm = float(r["total_capital_non_lm"] or 0.0)
+
         n_prof = sales_r - tot_cap if sales_r > 0 else 0.0
         p_pct = round((n_prof / tot_cap) * 100.0, 2) if tot_cap > 0 and sales_r > 0 else 0.0
+
+        p_lm = sales_r_lm - tot_cap_lm if sales_r_lm > 0 else 0.0
+        p_pct_lm = round((p_lm / tot_cap_lm) * 100.0, 2) if tot_cap_lm > 0 and sales_r_lm > 0 else 0.0
+
+        p_nlm = sales_r_non_lm - tot_cap_non_lm if sales_r_non_lm > 0 else 0.0
+        p_pct_nlm = round((p_nlm / tot_cap_non_lm) * 100.0, 2) if tot_cap_non_lm > 0 and sales_r_non_lm > 0 else 0.0
 
         result.append({
             "date_str": d_str,
@@ -807,11 +922,23 @@ def get_history_summary() -> List[Dict[str, Any]]:
             "total_transactions": r["total_trx"],
             "total_capital": tot_cap,
             "total_capital_formatted": format_rupiah(tot_cap),
+            "total_capital_lm": tot_cap_lm,
+            "total_capital_lm_formatted": format_rupiah(tot_cap_lm),
+            "total_capital_non_lm": tot_cap_non_lm,
+            "total_capital_non_lm_formatted": format_rupiah(tot_cap_non_lm),
             "sales_revenue": sales_r,
             "sales_revenue_formatted": format_rupiah(sales_r),
+            "sales_revenue_lm": sales_r_lm,
+            "sales_revenue_lm_formatted": format_rupiah(sales_r_lm),
+            "sales_revenue_non_lm": sales_r_non_lm,
+            "sales_revenue_non_lm_formatted": format_rupiah(sales_r_non_lm),
             "net_profit": n_prof,
             "net_profit_formatted": format_rupiah(n_prof),
             "profit_percentage": p_pct,
+            "profit_lm": p_lm,
+            "profit_pct_lm": p_pct_lm,
+            "profit_non_lm": p_nlm,
+            "profit_pct_non_lm": p_pct_nlm,
             "sales_notes": r["sales_notes"],
             "sold_at": r["sold_at"],
         })

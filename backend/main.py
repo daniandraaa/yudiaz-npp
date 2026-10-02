@@ -206,9 +206,15 @@ def close_session(date: Optional[str] = Query(None)):
 
 @app.post("/api/v1/day/sales")
 def record_day_sales(req: RecordSaleRequest, date: Optional[str] = Query(None)):
-    """Record sales proceeds for the bulk gold sale and compute net profit vs capital."""
+    """Record sales proceeds for the bulk gold sale (LM, Non-LM, or total) and compute net profit vs capital."""
     try:
-        res = crud.record_session_sale(date, req.sales_revenue, req.sales_notes)
+        res = crud.record_session_sale(
+            day_date=date,
+            sales_revenue=req.sales_revenue,
+            sales_revenue_lm=req.sales_revenue_lm or 0.0,
+            sales_revenue_non_lm=req.sales_revenue_non_lm or 0.0,
+            sales_notes=req.sales_notes
+        )
         return res
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
