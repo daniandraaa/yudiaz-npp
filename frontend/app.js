@@ -1213,62 +1213,85 @@ function copySpecificHistoryWA() {
 
 // ==================== SALES REVENUE & PROFIT (MODAL & INLINE CARD) ====================
 let salesModalTargetDate = null;
+let salesModalTargetCapLM = 0;
+let salesModalTargetCapNonLM = 0;
 let salesModalTargetCapital = 0;
 
 function updateInlineSalesCalc() {
-  const input = document.getElementById("inlineInputSales");
-  const rev = parseFloat(input ? input.value : 0) || 0;
-  const capital = state.dailyBoard ? state.dailyBoard.total_capital : 0;
-  
+  const inLM = document.getElementById("inlineInputSalesLM");
+  const inNonLM = document.getElementById("inlineInputSalesNonLM");
+  const revLM = parseFloat(inLM ? inLM.value : 0) || 0;
+  const revNonLM = parseFloat(inNonLM ? inNonLM.value : 0) || 0;
+
+  const capLM = state.dailyBoard ? (state.dailyBoard.total_capital_lm || 0) : 0;
+  const capNonLM = state.dailyBoard ? (state.dailyBoard.total_capital_non_lm || 0) : 0;
+  const totalCap = state.dailyBoard ? (state.dailyBoard.total_capital || 0) : 0;
+
+  const totalRev = revLM + revNonLM;
   const previewEl = document.getElementById("inlineProfitPreview");
   if (!previewEl) return;
-  
-  if (rev <= 0) {
-    previewEl.innerHTML = `<span class="text-slate-400 font-normal italic text-[11px]">Masukkan angka jual di atas</span>`;
+
+  if (totalRev <= 0) {
+    previewEl.innerHTML = `<span class="text-slate-400 font-normal italic text-[11px]">Masukkan angka jual LM dan Non-LM di atas</span>`;
     return;
   }
-  
-  const profit = rev - capital;
-  const pct = capital > 0 ? ((profit / capital) * 100).toFixed(1) : "0";
-  const profitSign = profit >= 0 ? "+" : "";
-  
-  previewEl.textContent = `Keuntungan: ${profitSign}${formatRupiah(profit)} (${profitSign}${pct}%)`;
-  previewEl.className = profit >= 0 ? "text-xs font-mono font-bold text-emerald-400" : "text-xs font-mono font-bold text-rose-400";
+
+  const profitLM = revLM - capLM;
+  const pctLM = capLM > 0 ? ((profitLM / capLM) * 100).toFixed(1) : "0";
+
+  const profitNonLM = revNonLM - capNonLM;
+  const pctNonLM = capNonLM > 0 ? ((profitNonLM / capNonLM) * 100).toFixed(1) : "0";
+
+  const totalProfit = totalRev - totalCap;
+  const totalPct = totalCap > 0 ? ((totalProfit / totalCap) * 100).toFixed(1) : "0";
+
+  const pSign = totalProfit >= 0 ? "+" : "";
+  const signLM = profitLM >= 0 ? "+" : "";
+  const signNonLM = profitNonLM >= 0 ? "+" : "";
+
+  previewEl.innerHTML = `
+    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+      <span class="text-gold-300">🪙 LM: <strong>${signLM}${formatRupiah(profitLM)}</strong> (${signLM}${pctLM}%)</span>
+      <span class="text-rose-300">💍 Non-LM: <strong>${signNonLM}${formatRupiah(profitNonLM)}</strong> (${signNonLM}${pctNonLM}%)</span>
+      <span class="${totalProfit >= 0 ? 'text-emerald-400 font-extrabold' : 'text-rose-400 font-extrabold'}">💎 Total: ${pSign}${formatRupiah(totalProfit)} (${pSign}${totalPct}%)</span>
+    </div>
+  `;
 }
 
-function addInlineSales(val) {
-  const input = document.getElementById("inlineInputSales");
+function addInlineSalesField(fieldId, val) {
+  const input = document.getElementById(fieldId);
   if (!input) return;
   const cur = parseFloat(input.value) || 0;
   input.value = cur + val;
   updateInlineSalesCalc();
 }
 
-function resetInlineSales() {
-  const input = document.getElementById("inlineInputSales");
-  if (!input) return;
-  input.value = "";
-  updateInlineSalesCalc();
-}
-
 async function saveInlineSales() {
-  const input = document.getElementById("inlineInputSales");
-  const rev = parseFloat(input ? input.value : 0) || 0;
-  if (rev <= 0) {
-    showToast("Nominal hasil penjualan belum diisi!", false);
-    if (input) input.focus();
+  const inLM = document.getElementById("inlineInputSalesLM");
+  const inNonLM = document.getElementById("inlineInputSalesNonLM");
+  const revLM = parseFloat(inLM ? inLM.value : 0) || 0;
+  const revNonLM = parseFloat(inNonLM ? inNonLM.value : 0) || 0;
+
+  if (revLM <= 0 && revNonLM <= 0) {
+    showToast("Nominal hasil penjualan LM atau Non-LM belum diisi!", false);
+    if (inLM) inLM.focus();
     return;
   }
-  
+
   try {
     const res = await fetch("/api/v1/day/sales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sales_revenue: rev, sales_notes: "Input penjualan kasir sore" })
+      body: JSON.stringify({
+        sales_revenue_lm: revLM,
+        sales_revenue_non_lm: revNonLM,
+        sales_revenue: revLM + revNonLM,
+        sales_notes: "Input penjualan kasir sore (LM & Non-LM)"
+      })
     });
     const data = await res.json();
     if (data.success) {
-      showToast(data.message || "Hasil penjualan & laba berhasil disimpan!");
+      showToast(data.message || "Hasil penjualan LM & Non-LM berhasil disimpan!");
       await loadAllData();
     } else {
       showToast(data.detail || "Gagal menyimpan hasil jual", false);
@@ -1281,7 +1304,7 @@ async function saveInlineSales() {
 async function openSalesModal(dateStr = null) {
   // If opening for current session, also focus and scroll to the inline form on the card
   if (!dateStr) {
-    const inlineInput = document.getElementById("inlineInputSales");
+    const inlineInput = document.getElementById("inlineInputSalesLM");
     if (inlineInput) {
       inlineInput.scrollIntoView({ behavior: "smooth", block: "center" });
       setTimeout(() => inlineInput.focus(), 300);
@@ -1292,42 +1315,68 @@ async function openSalesModal(dateStr = null) {
   if (!modal) return;
 
   salesModalTargetDate = dateStr;
-  let revenue = 0;
+  let revLM = 0;
+  let revNonLM = 0;
   let notes = "";
-  let capital = 0;
+  let capLM = 0;
+  let capNonLM = 0;
+  let totalCap = 0;
 
   if (dateStr) {
     const histItem = (state.historyList || []).find(h => h.date_str === dateStr);
     if (histItem) {
-      capital = histItem.total_capital || 0;
-      revenue = histItem.sales_revenue || 0;
+      totalCap = histItem.total_capital || 0;
+      capLM = histItem.total_capital_lm || 0;
+      capNonLM = histItem.total_capital_non_lm || 0;
+      revLM = histItem.sales_revenue_lm || 0;
+      revNonLM = histItem.sales_revenue_non_lm || 0;
       notes = histItem.sales_notes || "";
     } else {
       try {
         const res = await fetch(`/api/v1/history/${dateStr}`);
         const data = await res.json();
         if (data.success && data.data && data.data.board) {
-          capital = data.data.board.total_capital || 0;
-          revenue = data.data.board.sales_revenue || 0;
-          notes = data.data.board.sales_notes || "";
+          const b = data.data.board;
+          totalCap = b.total_capital || 0;
+          capLM = b.total_capital_lm || 0;
+          capNonLM = b.total_capital_non_lm || 0;
+          revLM = b.sales_revenue_lm || 0;
+          revNonLM = b.sales_revenue_non_lm || 0;
+          notes = b.sales_notes || "";
         }
       } catch (e) {}
     }
   } else {
     if (state.dailyBoard) {
-      salesModalTargetDate = state.dailyBoard.day_date;
-      capital = state.dailyBoard.total_capital || 0;
-      revenue = state.dailyBoard.sales_revenue || 0;
-      notes = state.dailyBoard.sales_notes || "";
+      const b = state.dailyBoard;
+      salesModalTargetDate = b.day_date;
+      totalCap = b.total_capital || 0;
+      capLM = b.total_capital_lm || 0;
+      capNonLM = b.total_capital_non_lm || 0;
+      revLM = b.sales_revenue_lm || 0;
+      revNonLM = b.sales_revenue_non_lm || 0;
+      notes = b.sales_notes || "";
     }
   }
 
-  salesModalTargetCapital = capital;
+  salesModalTargetCapital = totalCap;
+  salesModalTargetCapLM = capLM;
+  salesModalTargetCapNonLM = capNonLM;
+
   const targetCapEl = document.getElementById("modalInputTargetCapital");
-  if (targetCapEl) targetCapEl.textContent = formatRupiah(capital);
-  
-  const revInput = document.getElementById("inputSalesRevenue");
-  if (revInput) revInput.value = revenue > 0 ? revenue : "";
+  if (targetCapEl) targetCapEl.textContent = formatRupiah(totalCap);
+
+  const targetCapLMEl = document.getElementById("modalTargetCapLM");
+  if (targetCapLMEl) targetCapLMEl.textContent = `Modal LM: ${formatRupiah(capLM)}`;
+
+  const targetCapNonLMEl = document.getElementById("modalTargetCapNonLM");
+  if (targetCapNonLMEl) targetCapNonLMEl.textContent = `Modal Non-LM: ${formatRupiah(capNonLM)}`;
+
+  const inputLM = document.getElementById("modalSalesLM");
+  if (inputLM) inputLM.value = revLM > 0 ? revLM : "";
+
+  const inputNonLM = document.getElementById("modalSalesNonLM");
+  if (inputNonLM) inputNonLM.value = revNonLM > 0 ? revNonLM : "";
 
   const notesInput = document.getElementById("inputSalesNotes");
   if (notesInput) notesInput.value = notes || "";
@@ -1346,59 +1395,78 @@ function closeSalesModal() {
   }
 }
 
-function addSalesAmount(val) {
-  const input = document.getElementById("inputSalesRevenue");
+function addModalSalesField(fieldId, val) {
+  const input = document.getElementById(fieldId);
   if (!input) return;
   const current = parseFloat(input.value) || 0;
   input.value = current + val;
   updateSalesCalculationPreview();
 }
 
-function resetSalesAmount() {
-  const input = document.getElementById("inputSalesRevenue");
-  if (!input) return;
-  input.value = "";
-  updateSalesCalculationPreview();
-}
-
 function updateSalesCalculationPreview() {
-  const input = document.getElementById("inputSalesRevenue");
-  const rev = parseFloat(input ? input.value : 0) || 0;
-  
-  const prevEl = document.getElementById("formattedSalesPreview");
-  if (prevEl) prevEl.textContent = formatRupiah(rev);
+  const inLM = document.getElementById("modalSalesLM");
+  const inNonLM = document.getElementById("modalSalesNonLM");
+  const revLM = parseFloat(inLM ? inLM.value : 0) || 0;
+  const revNonLM = parseFloat(inNonLM ? inNonLM.value : 0) || 0;
+  const totalRev = revLM + revNonLM;
 
-  const capital = salesModalTargetCapital;
-  const formulaEl = document.getElementById("salesModalFormulaText");
-  if (formulaEl) formulaEl.textContent = `${formatRupiah(rev)} - ${formatRupiah(capital)}`;
+  const capLM = salesModalTargetCapLM;
+  const capNonLM = salesModalTargetCapNonLM;
+  const totalCap = salesModalTargetCapital;
 
-  const profit = rev - capital;
-  const pct = capital > 0 ? ((profit / capital) * 100).toFixed(1) : "0";
-  const profitSign = profit >= 0 ? "+" : "";
+  const profitLM = revLM - capLM;
+  const pctLM = capLM > 0 ? ((profitLM / capLM) * 100).toFixed(1) : "0";
+  const signLM = profitLM >= 0 ? "+" : "";
+
+  const profitNonLM = revNonLM - capNonLM;
+  const pctNonLM = capNonLM > 0 ? ((profitNonLM / capNonLM) * 100).toFixed(1) : "0";
+  const signNonLM = profitNonLM >= 0 ? "+" : "";
+
+  const totalProfit = totalRev - totalCap;
+  const totalPct = totalCap > 0 ? ((totalProfit / totalCap) * 100).toFixed(1) : "0";
+  const totalSign = totalProfit >= 0 ? "+" : "";
+
+  const prevLM = document.getElementById("previewProfitLM");
+  if (prevLM) {
+    prevLM.textContent = `Laba LM: ${signLM}${formatRupiah(profitLM)} (${signLM}${pctLM}%)`;
+    prevLM.className = profitLM >= 0 ? "text-[11px] font-mono text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-400 font-bold";
+  }
+
+  const prevNonLM = document.getElementById("previewProfitNonLM");
+  if (prevNonLM) {
+    prevNonLM.textContent = `Laba Non-LM: ${signNonLM}${formatRupiah(profitNonLM)} (${signNonLM}${pctNonLM}%)`;
+    prevNonLM.className = profitNonLM >= 0 ? "text-[11px] font-mono text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-400 font-bold";
+  }
+
+  const prevTotal = document.getElementById("formattedSalesPreview");
+  if (prevTotal) prevTotal.textContent = formatRupiah(totalRev);
 
   const profitResEl = document.getElementById("salesModalProfitResult");
   const profitPctEl = document.getElementById("salesModalProfitPct");
 
   if (profitResEl) {
-    profitResEl.textContent = `${profitSign}${formatRupiah(profit)}`;
-    profitResEl.className = profit >= 0 
+    profitResEl.textContent = `${totalSign}${formatRupiah(totalProfit)}`;
+    profitResEl.className = totalProfit >= 0 
       ? "text-base font-mono font-extrabold text-emerald-400" 
       : "text-base font-mono font-extrabold text-rose-400";
   }
   if (profitPctEl) {
-    profitPctEl.textContent = `(${profitSign}${pct}%)`;
-    profitPctEl.className = profit >= 0 
+    profitPctEl.textContent = `(${totalSign}${totalPct}%)`;
+    profitPctEl.className = totalProfit >= 0 
       ? "text-[10px] font-mono text-emerald-300" 
       : "text-[10px] font-mono text-rose-300";
   }
 }
 
 async function saveSalesRevenue() {
-  const input = document.getElementById("inputSalesRevenue");
-  const rev = parseFloat(input ? input.value : 0) || 0;
+  const inLM = document.getElementById("modalSalesLM");
+  const inNonLM = document.getElementById("modalSalesNonLM");
+  const revLM = parseFloat(inLM ? inLM.value : 0) || 0;
+  const revNonLM = parseFloat(inNonLM ? inNonLM.value : 0) || 0;
+  const totalRev = revLM + revNonLM;
   const notes = document.getElementById("inputSalesNotes")?.value?.trim() || "";
 
-  if (rev <= 0) {
+  if (totalRev <= 0) {
     showToast("Nominal hasil penjualan belum diisi!", false);
     return;
   }
@@ -1409,7 +1477,12 @@ async function saveSalesRevenue() {
     const res = await fetch(`/api/v1/day/sales${queryDate}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sales_revenue: rev, sales_notes: notes })
+      body: JSON.stringify({
+        sales_revenue: totalRev,
+        sales_revenue_lm: revLM,
+        sales_revenue_non_lm: revNonLM,
+        sales_notes: notes
+      })
     });
     const data = await res.json();
     if (data.success) {
@@ -1537,14 +1610,13 @@ async function saveAllPartnerSettings() {
 }
 
 // Global browser window exports for event handlers
+window.setGoldCategory = setGoldCategory;
+window.addInlineSalesField = addInlineSalesField;
+window.addModalSalesField = addModalSalesField;
 window.openSalesModal = openSalesModal;
 window.closeSalesModal = closeSalesModal;
-window.addSalesAmount = addSalesAmount;
-window.resetSalesAmount = resetSalesAmount;
 window.saveSalesRevenue = saveSalesRevenue;
 window.updateSalesCalculationPreview = updateSalesCalculationPreview;
-window.addInlineSales = addInlineSales;
-window.resetInlineSales = resetInlineSales;
 window.saveInlineSales = saveInlineSales;
 window.updateInlineSalesCalc = updateInlineSalesCalc;
 window.openSettingsModal = openSettingsModal;
