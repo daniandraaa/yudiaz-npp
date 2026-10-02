@@ -72,6 +72,10 @@ def init_db() -> None:
     day_cols = [row[1] for row in cursor.fetchall()]
     if "sales_revenue" not in day_cols:
         cursor.execute("ALTER TABLE days ADD COLUMN sales_revenue REAL DEFAULT 0.0;")
+    if "sales_revenue_lm" not in day_cols:
+        cursor.execute("ALTER TABLE days ADD COLUMN sales_revenue_lm REAL DEFAULT 0.0;")
+    if "sales_revenue_non_lm" not in day_cols:
+        cursor.execute("ALTER TABLE days ADD COLUMN sales_revenue_non_lm REAL DEFAULT 0.0;")
     if "sales_notes" not in day_cols:
         cursor.execute("ALTER TABLE days ADD COLUMN sales_notes TEXT;")
     if "sold_at" not in day_cols:
@@ -91,11 +95,13 @@ def init_db() -> None:
     );
     """)
 
-    # Safe migration: ensure receipt_image column exists
+    # Safe migration: ensure receipt_image & gold_category columns exist
     cursor.execute("PRAGMA table_info(transactions);")
     cols = [row[1] for row in cursor.fetchall()]
     if "receipt_image" not in cols:
         cursor.execute("ALTER TABLE transactions ADD COLUMN receipt_image TEXT;")
+    if "gold_category" not in cols:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN gold_category TEXT NOT NULL DEFAULT 'LM';")
 
     # 4. Transaction Shares (Pemodal per transaksi)
     cursor.execute("""

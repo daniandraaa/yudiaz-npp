@@ -29,6 +29,7 @@ class ShareInput(BaseModel):
 
 class TransactionCreateRequest(BaseModel):
     item_name: Optional[str] = Field(default="Emas")
+    gold_category: str = Field(default="LM") # "LM" (Logam Mulia) or "NON_LM" (Perhiasan)
     total_amount: float
     shares: List[ShareInput]
     notes: Optional[str] = None
@@ -46,6 +47,7 @@ class TransactionResponse(BaseModel):
     id: str
     day_date: str
     item_name: str
+    gold_category: str = "LM"
     total_amount: float
     shares: List[ShareDetail]
     notes: Optional[str] = None
