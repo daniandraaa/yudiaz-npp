@@ -270,6 +270,15 @@ function renderDailyBoard() {
     }
   }
 
+  // Update Inline Sales Card Inputs
+  const inlineCapEl = document.getElementById("inlineSalesCapText");
+  if (inlineCapEl) inlineCapEl.textContent = `Modal: ${formatRupiah(board.total_capital)}`;
+  const inlineInput = document.getElementById("inlineInputSales");
+  if (inlineInput && !inlineInput.value && board.sales_revenue > 0) {
+    inlineInput.value = board.sales_revenue;
+  }
+  updateInlineSalesCalc();
+
   // Calculate percentage of settled money
   let settledMoney = 0;
   board.payouts.forEach(p => {

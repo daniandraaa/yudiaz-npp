@@ -277,8 +277,8 @@
               <p class="text-[10px] text-amber-200/60">Hasil penjualan borongan emas dikurangi modal pokok pemodal</p>
             </div>
           </div>
-          <button onclick="openSalesModal()" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-bold text-xs shadow-md transition-all active:scale-[0.98]">
-            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <button type="button" onclick="openSalesModal()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs shadow-md transition-all active:scale-[0.98]">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5 stroke-[2.5]"></i>
             <span id="btnSalesActionText">Input Hasil Jual Sore</span>
           </button>
         </div>
@@ -297,7 +297,7 @@
           </div>
 
           <!-- Metric 2: Hasil Jual Sore -->
-          <div class="bg-maroon-950/80 p-3 rounded-xl border border-gold-500/30">
+          <div class="bg-maroon-950/80 p-3 rounded-xl border border-gold-500/30 cursor-pointer hover:border-gold-400 transition-colors" onclick="openSalesModal()" title="Klik untuk input/ubah hasil penjualan">
             <div class="text-[10px] font-mono text-gold-400 uppercase tracking-wider flex items-center gap-1">
               <i data-lucide="arrow-up-right" class="w-3 h-3 text-emerald-400"></i>
               Hasil Penjualan Emas
@@ -318,6 +318,42 @@
             </div>
             <div class="text-base sm:text-lg font-mono font-extrabold text-emerald-400 mt-1" id="salesCardProfit">
               Rp 0
+            </div>
+          </div>
+        </div>
+
+        <!-- INLINE QUICK INPUT FORM ON THE CARD -->
+        <div id="inlineSalesBox" class="mt-3.5 pt-3.5 border-t border-maroon-700/80 bg-maroon-950/80 p-3.5 rounded-xl border border-gold-500/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
+              <i data-lucide="calculator" class="w-3.5 h-3.5 text-gold-400"></i>
+              <span>Input Penerimaan Jual Emas Sore (Rp)</span>
+            </span>
+            <span class="text-[10px] font-mono text-amber-200/70" id="inlineSalesCapText">Modal: Rp 0</span>
+          </div>
+
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-xs text-gold-400">Rp</span>
+              <input type="number" id="inlineInputSales" placeholder="contoh: 380000000" oninput="updateInlineSalesCalc()" class="w-full bg-maroon-900 border border-gold-500/40 rounded-xl pl-9 pr-3 py-2.5 text-xs sm:text-sm font-mono font-bold text-white focus:outline-none focus:border-gold-300">
+            </div>
+            <button type="button" onclick="saveInlineSales()" class="px-5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs shadow-md transition-all active:scale-[0.98] shrink-0 flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+              <span>Simpan</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="addInlineSales(5000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-xs font-mono text-slate-300 hover:text-white">+5 Jt</button>
+              <button type="button" onclick="addInlineSales(10000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-xs font-mono text-slate-300 hover:text-white">+10 Jt</button>
+              <button type="button" onclick="addInlineSales(25000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-xs font-mono text-slate-300 hover:text-white">+25 Jt</button>
+              <button type="button" onclick="addInlineSales(50000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-xs font-mono text-slate-300 hover:text-white">+50 Jt</button>
+              <button type="button" onclick="addInlineSales(100000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-xs font-mono text-slate-300 hover:text-white">+100 Jt</button>
+              <button type="button" onclick="resetInlineSales()" class="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-xs font-mono text-rose-300">Reset</button>
+            </div>
+            <div id="inlineProfitPreview" class="text-xs font-mono font-bold text-emerald-400">
+              Keuntungan: Rp 0 (0%)
             </div>
           </div>
         </div>
@@ -759,6 +795,6 @@
     <span id="toastMsg">Pesan Notifikasi</span>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20261002_02"></script>
 </body>
 </html>
