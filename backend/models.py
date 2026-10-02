@@ -18,6 +18,11 @@ class PartnerUpdateRequest(BaseModel):
     initials: Optional[str] = None
     color: Optional[str] = None
 
+class PartnerCreateRequest(BaseModel):
+    name: str
+    initials: Optional[str] = None
+    color: Optional[str] = None
+
 class ShareInput(BaseModel):
     partner_id: int
     amount: float
@@ -75,6 +80,11 @@ class DailyBoardResponse(BaseModel):
     closed_at: Optional[str] = None
     total_capital: float
     total_transactions: int
+    sales_revenue: float = 0.0
+    net_profit: float = 0.0
+    profit_percentage: float = 0.0
+    sales_notes: Optional[str] = None
+    sold_at: Optional[str] = None
     payouts: List[PartnerPayout]
     all_settled: bool
     whatsapp_rekap: str
@@ -82,3 +92,7 @@ class DailyBoardResponse(BaseModel):
 class TogglePayoutRequest(BaseModel):
     partner_id: int
     is_taken: bool
+
+class RecordSaleRequest(BaseModel):
+    sales_revenue: float
+    sales_notes: Optional[str] = None

@@ -60,9 +60,22 @@ def init_db() -> None:
         date_str TEXT PRIMARY KEY,
         status TEXT NOT NULL DEFAULT 'ACTIVE', -- ACTIVE or CLOSED
         opened_at TEXT NOT NULL,
-        closed_at TEXT
+        closed_at TEXT,
+        sales_revenue REAL DEFAULT 0.0,
+        sales_notes TEXT,
+        sold_at TEXT
     );
     """)
+
+    # Safe migration: ensure sales columns exist in days
+    cursor.execute("PRAGMA table_info(days);")
+    day_cols = [row[1] for row in cursor.fetchall()]
+    if "sales_revenue" not in day_cols:
+        cursor.execute("ALTER TABLE days ADD COLUMN sales_revenue REAL DEFAULT 0.0;")
+    if "sales_notes" not in day_cols:
+        cursor.execute("ALTER TABLE days ADD COLUMN sales_notes TEXT;")
+    if "sold_at" not in day_cols:
+        cursor.execute("ALTER TABLE days ADD COLUMN sold_at TEXT;")
 
     # 3. Transactions table
     cursor.execute("""

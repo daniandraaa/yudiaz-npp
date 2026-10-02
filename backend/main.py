@@ -17,9 +17,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from backend.database import init_db
 from backend.models import (
     PartnerUpdateRequest,
+    PartnerCreateRequest,
     TransactionCreateRequest,
     TogglePayoutRequest,
     ReceiptOcrResponse,
+    RecordSaleRequest,
 )
 from backend import crud
 from backend.ai_ocr import process_receipt_image, RECEIPTS_DIR
@@ -69,12 +71,30 @@ def get_health():
 def list_partners():
     return {"success": True, "data": crud.get_all_partners()}
 
+@app.post("/api/v1/partners", status_code=status.HTTP_201_CREATED)
+def add_new_partner(req: PartnerCreateRequest):
+    try:
+        res = crud.create_partner(req)
+        return {"success": True, "message": f"Pemodal {res.name} berhasil ditambahkan", "data": res}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menambahkan pemodal: {str(e)}")
+
 @app.put("/api/v1/partners/{partner_id}")
 def update_partner_profile(partner_id: int, req: PartnerUpdateRequest):
     res = crud.update_partner(partner_id, req)
     if not res:
         raise HTTPException(status_code=404, detail="Partner not found")
     return {"success": True, "data": res}
+
+@app.delete("/api/v1/partners/{partner_id}")
+def remove_partner(partner_id: int):
+    try:
+        res = crud.delete_partner(partner_id)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menghapus pemodal: {str(e)}")
 
 # 3. Daily Board Endpoint
 @app.get("/api/v1/board")
@@ -161,7 +181,7 @@ def toggle_payout(req: TogglePayoutRequest, date: Optional[str] = Query(None)):
     crud.toggle_payout_status(target_date, req.partner_id, req.is_taken)
     return {"success": True, "message": "Status penarikan cash berhasil diperbarui"}
 
-# 6. Session Lifecycle Endpoints (Explicit Buka & Tutup Buku)
+# 6. Session Lifecycle & Sales Endpoints (Explicit Buka, Tutup Buku, & Input Hasil Jual)
 @app.post("/api/v1/day/open")
 def open_session():
     """Explicitly open a new trading session. Stamps current day and time."""
@@ -173,6 +193,17 @@ def close_session(date: Optional[str] = Query(None)):
     """Explicitly close the current active trading session. Archives to History."""
     res = crud.close_day_session(date)
     return {"success": True, "message": res["message"], "data": res}
+
+@app.post("/api/v1/day/sales")
+def record_day_sales(req: RecordSaleRequest, date: Optional[str] = Query(None)):
+    """Record sales proceeds for the bulk gold sale and compute net profit vs capital."""
+    try:
+        res = crud.record_session_sale(date, req.sales_revenue, req.sales_notes)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal mencatat hasil penjualan: {str(e)}")
 
 @app.post("/api/v1/day/reopen")
 def reopen_session(date: Optional[str] = Query(None)):
