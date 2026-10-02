@@ -180,7 +180,7 @@ def get_active_session() -> Optional[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
     row = cursor.execute(
-        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_notes, sold_at FROM days WHERE status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
+        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
     ).fetchone()
     conn.close()
     return dict(row) if row else None
@@ -190,13 +190,19 @@ def get_latest_session() -> Optional[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
     row = cursor.execute(
-        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_notes, sold_at FROM days ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
+        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
     ).fetchone()
     conn.close()
     return dict(row) if row else None
 
-def record_session_sale(day_date: Optional[str], sales_revenue: float, sales_notes: Optional[str] = None) -> Dict[str, Any]:
-    """Record gold bulk sales proceeds and calculate net profit vs capital."""
+def record_session_sale(
+    day_date: Optional[str],
+    sales_revenue: Optional[float] = None,
+    sales_revenue_lm: float = 0.0,
+    sales_revenue_non_lm: float = 0.0,
+    sales_notes: Optional[str] = None
+) -> Dict[str, Any]:
+    """Record gold bulk sales proceeds (LM & Non-LM) and calculate net profit vs capital."""
     target = day_date
     if not target:
         active = get_active_session()
@@ -210,12 +216,26 @@ def record_session_sale(day_date: Optional[str], sales_revenue: float, sales_not
     if not target:
         raise ValueError("Tidak ada sesi buku yang dapat dicatat hasil penjualannya.")
 
+    rev_lm = float(sales_revenue_lm or 0.0)
+    rev_non_lm = float(sales_revenue_non_lm or 0.0)
+    
+    if rev_lm > 0 or rev_non_lm > 0:
+        total_rev = rev_lm + rev_non_lm
+    elif sales_revenue is not None:
+        total_rev = float(sales_revenue)
+    else:
+        total_rev = 0.0
+
     conn = get_connection()
     cursor = conn.cursor()
     now_iso = datetime.now(WIB).isoformat()
     cursor.execute(
-        "UPDATE days SET sales_revenue = ?, sales_notes = ?, sold_at = ? WHERE date_str = ?;",
-        (float(sales_revenue), sales_notes, now_iso, target)
+        """
+        UPDATE days 
+        SET sales_revenue = ?, sales_revenue_lm = ?, sales_revenue_non_lm = ?, sales_notes = ?, sold_at = ? 
+        WHERE date_str = ?;
+        """,
+        (total_rev, rev_lm, rev_non_lm, sales_notes, now_iso, target)
     )
     conn.commit()
     conn.close()
@@ -224,11 +244,15 @@ def record_session_sale(day_date: Optional[str], sales_revenue: float, sales_not
     return {
         "success": True,
         "date_str": target,
-        "sales_revenue": sales_revenue,
+        "sales_revenue": total_rev,
+        "sales_revenue_lm": rev_lm,
+        "sales_revenue_non_lm": rev_non_lm,
         "total_capital": board.total_capital,
         "net_profit": board.net_profit,
         "profit_percentage": board.profit_percentage,
-        "message": f"Hasil penjualan {format_rupiah(sales_revenue)} berhasil disimpan. Keuntungan bersih: {format_rupiah(board.net_profit)}"
+        "profit_lm": board.profit_lm,
+        "profit_non_lm": board.profit_non_lm,
+        "message": f"Hasil penjualan {format_rupiah(total_rev)} berhasil disimpan. Total laba bersih: {format_rupiah(board.net_profit)}"
     }
 
 def open_day_session() -> Dict[str, Any]:
@@ -359,12 +383,14 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
     now_time = datetime.now(WIB).strftime("%H:%M")
     item_name = req.item_name.strip() if req.item_name and req.item_name.strip() else f"Emas {now_time}"
 
+    gold_category = "NON_LM" if getattr(req, "gold_category", "").upper() == "NON_LM" else "LM"
+
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO transactions (id, day_date, item_name, total_amount, notes, receipt_image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?);",
-        (trx_id, day_date, item_name, req.total_amount, req.notes, req.receipt_image, now_iso)
+        "INSERT INTO transactions (id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+        (trx_id, day_date, item_name, gold_category, req.total_amount, req.notes, req.receipt_image, now_iso)
     )
 
     shares_details: List[ShareDetail] = []
@@ -401,6 +427,7 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
         id=trx_id,
         day_date=day_date,
         item_name=item_name,
+        gold_category=gold_category,
         total_amount=req.total_amount,
         shares=shares_details,
         notes=req.notes,

@@ -83,6 +83,16 @@ class DailyBoardResponse(BaseModel):
     total_capital: float
     total_transactions: int
     sales_revenue: float = 0.0
+    sales_revenue_lm: float = 0.0
+    sales_revenue_non_lm: float = 0.0
+    total_capital_lm: float = 0.0
+    total_capital_non_lm: float = 0.0
+    total_trx_lm: int = 0
+    total_trx_non_lm: int = 0
+    profit_lm: float = 0.0
+    profit_pct_lm: float = 0.0
+    profit_non_lm: float = 0.0
+    profit_pct_non_lm: float = 0.0
     net_profit: float = 0.0
     profit_percentage: float = 0.0
     sales_notes: Optional[str] = None
@@ -96,5 +106,7 @@ class TogglePayoutRequest(BaseModel):
     is_taken: bool
 
 class RecordSaleRequest(BaseModel):
-    sales_revenue: float
+    sales_revenue: Optional[float] = None
+    sales_revenue_lm: Optional[float] = 0.0
+    sales_revenue_non_lm: Optional[float] = 0.0
     sales_notes: Optional[str] = None
