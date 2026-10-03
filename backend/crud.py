@@ -6,7 +6,7 @@ Author: Devera (CTO & Lead Accountant)
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
-from backend.database import get_connection
+from backend.database import get_connection, db_session, db_readonly
 from backend.models import (
     PartnerItem, PartnerUpdateRequest, PartnerCreateRequest, TransactionCreateRequest,
     TransactionResponse, ShareDetail, PartnerPayout, DailyBoardResponse, RecordSaleRequest
@@ -29,47 +29,50 @@ PARTNER_COLOR_PALETTE = [
     "#84CC16",  # Lime
 ]
 
-def get_current_wib_date() -> str:
-    return datetime.now(WIB).strftime("%Y-%m-%d")
+def format_rupiah(num: float) -> str:
+    """Format float to Rupiah string: 45000000 -> Rp 45.000.000"""
+    return f"Rp {int(round(num)):,}".replace(",", ".")
 
-def format_rupiah(amount: float) -> str:
-    return f"Rp {int(amount):,}".replace(",", ".")
-
-def format_session_display_name(date_str: str, opened_at: Optional[str] = None) -> str:
+def format_session_display_name(date_str: str, opened_at_iso: Optional[str] = None) -> str:
+    """
+    Format a session identifier like '2026-10-01' or '2026-10-01_S2'
+    into an Indonesian display title:
+    'Kamis, 1 Oktober 2026 • Dibuka 14:35 WIB' or
+    'Kamis, 1 Oktober 2026 (Sesi 2) • Dibuka 18:10 WIB'
+    """
     if not date_str:
-        return "Buku Kasir Sedang Ditutup"
-
+        return "Buku Kasir Ditutup"
+        
     parts = date_str.split("_")
     base_date = parts[0]
-    session_suffix = ""
-    if len(parts) > 1 and parts[1].startswith("S"):
-        session_num = parts[1].replace("S", "")
-        session_suffix = f" (Sesi {session_num})"
-    elif len(parts) > 1:
-        session_suffix = f" ({parts[1]})"
-
+    session_suffix = f" (Sesi {parts[1][1:]})" if len(parts) > 1 and parts[1].startswith("S") else ""
+    
+    days_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+    months_indo = [
+        "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ]
+    
     open_time_str = ""
-    if opened_at:
+    if opened_at_iso:
         try:
-            dt_open = datetime.fromisoformat(opened_at)
-            open_time_str = dt_open.strftime(" • Dibuka %H:%M WIB")
+            dt_open = datetime.fromisoformat(opened_at_iso)
+            open_time_str = f" • Dibuka {dt_open.strftime('%H:%M')} WIB"
         except Exception:
             pass
 
     try:
-        dt_obj = datetime.strptime(base_date, "%Y-%m-%d")
-        days_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-        day_name = days_indo[dt_obj.weekday()]
-        months_indo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-        formatted = f"{day_name}, {dt_obj.day} {months_indo[dt_obj.month - 1]} {dt_obj.year}"
+        dt = datetime.strptime(base_date, "%Y-%m-%d")
+        day_name = days_indo[dt.weekday()]
+        month_name = months_indo[dt.month]
+        formatted = f"{day_name}, {dt.day} {month_name} {dt.year}"
         return f"{formatted}{session_suffix}{open_time_str}"
     except Exception:
         return f"{date_str}{session_suffix}{open_time_str}"
 
 def get_all_partners() -> List[PartnerItem]:
-    conn = get_connection()
-    rows = conn.execute("SELECT id, name, initials, color, is_active FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
-    conn.close()
+    with db_readonly() as conn:
+        rows = conn.execute("SELECT id, name, initials, color, is_active FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
     return [
         PartnerItem(
             id=r["id"],
@@ -82,12 +85,8 @@ def get_all_partners() -> List[PartnerItem]:
     ]
 
 def create_partner(req: PartnerCreateRequest) -> PartnerItem:
-    conn = get_connection()
-    cursor = conn.cursor()
-    
     clean_name = req.name.strip()
     if not clean_name:
-        conn.close()
         raise ValueError("Nama pemodal tidak boleh kosong.")
         
     # Generate initials if not provided
@@ -102,98 +101,83 @@ def create_partner(req: PartnerCreateRequest) -> PartnerItem:
         else:
             initials = "EM"
 
-    # Color assignment
-    if req.color and req.color.strip():
-        color = req.color.strip()
-    else:
-        existing_count = cursor.execute("SELECT COUNT(*) FROM partners;").fetchone()[0]
-        color = PARTNER_COLOR_PALETTE[existing_count % len(PARTNER_COLOR_PALETTE)]
+    with db_session() as conn:
+        cursor = conn.cursor()
+        # Count partners to assign color
+        count = cursor.execute("SELECT COUNT(*) FROM partners;").fetchone()[0]
+        color = req.color.strip() if req.color and req.color.strip() else PARTNER_COLOR_PALETTE[count % len(PARTNER_COLOR_PALETTE)]
 
-    now_iso = datetime.now(WIB).isoformat()
-    cursor.execute(
-        "INSERT INTO partners (name, initials, color, is_active, created_at) VALUES (?, ?, ?, 1, ?);",
-        (clean_name, initials, color, now_iso)
-    )
-    new_id = int(cursor.lastrowid or 0)
-
-    # Seed daily_payouts for all days that are ACTIVE
-    active_days = cursor.execute("SELECT date_str FROM days WHERE status = 'ACTIVE';").fetchall()
-    for ad in active_days:
+        now_iso = datetime.now(WIB).isoformat()
         cursor.execute(
-            "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
-            (ad["date_str"], new_id)
+            "INSERT INTO partners (name, initials, color, is_active, created_at) VALUES (?, ?, ?, 1, ?);",
+            (clean_name, initials, color, now_iso)
         )
+        new_id = int(cursor.lastrowid or 0)
 
-    conn.commit()
-    conn.close()
+        # Seed into active session if one exists
+        active = cursor.execute("SELECT date_str FROM days WHERE status = 'ACTIVE' LIMIT 1;").fetchone()
+        if active:
+            cursor.execute(
+                "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+                (active["date_str"], new_id)
+            )
+
     return PartnerItem(id=new_id, name=clean_name, initials=initials, color=color, is_active=True)
 
 def update_partner(partner_id: int, req: PartnerUpdateRequest) -> Optional[PartnerItem]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name, initials, color, is_active FROM partners WHERE id = ?;", (partner_id,))
-    existing = cursor.fetchone()
-    if not existing:
-        conn.close()
-        return None
+    with db_session() as conn:
+        cursor = conn.cursor()
+        existing = cursor.execute("SELECT id, name, initials, color, is_active FROM partners WHERE id = ?;", (partner_id,)).fetchone()
+        if not existing:
+            return None
 
-    new_name = req.name.strip()
-    new_initials = req.initials.strip() if req.initials else existing["initials"]
-    new_color = req.color.strip() if req.color else existing["color"]
+        new_name = req.name.strip()
+        new_initials = req.initials.strip() if req.initials else existing["initials"]
+        new_color = req.color.strip() if req.color else existing["color"]
 
-    cursor.execute(
-        "UPDATE partners SET name = ?, initials = ?, color = ? WHERE id = ?;",
-        (new_name, new_initials, new_color, partner_id)
-    )
-    conn.commit()
-    conn.close()
+        cursor.execute(
+            "UPDATE partners SET name = ?, initials = ?, color = ? WHERE id = ?;",
+            (new_name, new_initials, new_color, partner_id)
+        )
+
     return PartnerItem(id=partner_id, name=new_name, initials=new_initials, color=new_color, is_active=True)
 
 def delete_partner(partner_id: int) -> Dict[str, Any]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    # Check if partner has any transactions
-    usage = cursor.execute("SELECT COUNT(*) FROM transaction_shares WHERE partner_id = ?;", (partner_id,)).fetchone()[0]
-    if usage > 0:
-        cursor.execute("UPDATE partners SET is_active = 0 WHERE id = ?;", (partner_id,))
-        conn.commit()
-        conn.close()
-        return {
-            "success": True, 
-            "soft_deleted": True,
-            "message": "Pemodal dinonaktifkan (tersimpan dalam arsip audit transaksi lampau)."
-        }
-    else:
-        cursor.execute("DELETE FROM daily_payouts WHERE partner_id = ?;", (partner_id,))
-        cursor.execute("DELETE FROM partners WHERE id = ?;", (partner_id,))
-        conn.commit()
-        conn.close()
-        return {
-            "success": True, 
-            "soft_deleted": False,
-            "message": "Pemodal berhasil dihapus secara permanen."
-        }
+    with db_session() as conn:
+        cursor = conn.cursor()
+        # Check if partner has any transactions
+        usage = cursor.execute("SELECT COUNT(*) FROM transaction_shares WHERE partner_id = ?;", (partner_id,)).fetchone()[0]
+        if usage > 0:
+            cursor.execute("UPDATE partners SET is_active = 0 WHERE id = ?;", (partner_id,))
+            return {
+                "success": True, 
+                "soft_deleted": True,
+                "message": "Pemodal dinonaktifkan (tersimpan dalam arsip audit transaksi lampau)."
+            }
+        else:
+            cursor.execute("DELETE FROM daily_payouts WHERE partner_id = ?;", (partner_id,))
+            cursor.execute("DELETE FROM partners WHERE id = ?;", (partner_id,))
+            return {
+                "success": True, 
+                "soft_deleted": False,
+                "message": "Pemodal berhasil dihapus secara permanen."
+            }
 
 def get_active_session() -> Optional[Dict[str, Any]]:
     """Return the currently ACTIVE session if one exists. Never auto-creates."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    row = cursor.execute(
-        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    with db_readonly() as conn:
+        row = conn.execute(
+            "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
+        ).fetchone()
+        return dict(row) if row else None
 
 def get_latest_session() -> Optional[Dict[str, Any]]:
     """Return the most recently created session (ACTIVE or CLOSED)."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    row = cursor.execute(
-        "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    with db_readonly() as conn:
+        row = conn.execute(
+            "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
+        ).fetchone()
+        return dict(row) if row else None
 
 def record_session_sale(
     day_date: Optional[str],
@@ -226,19 +210,16 @@ def record_session_sale(
     else:
         total_rev = 0.0
 
-    conn = get_connection()
-    cursor = conn.cursor()
     now_iso = datetime.now(WIB).isoformat()
-    cursor.execute(
-        """
-        UPDATE days 
-        SET sales_revenue = ?, sales_revenue_lm = ?, sales_revenue_non_lm = ?, sales_notes = ?, sold_at = ? 
-        WHERE date_str = ?;
-        """,
-        (total_rev, rev_lm, rev_non_lm, sales_notes, now_iso, target)
-    )
-    conn.commit()
-    conn.close()
+    with db_session() as conn:
+        conn.execute(
+            """
+            UPDATE days 
+            SET sales_revenue = ?, sales_revenue_lm = ?, sales_revenue_non_lm = ?, sales_notes = ?, sold_at = ? 
+            WHERE date_str = ?;
+            """,
+            (total_rev, rev_lm, rev_non_lm, sales_notes, now_iso, target)
+        )
 
     board = get_daily_board(target)
     return {
@@ -274,36 +255,33 @@ def open_day_session() -> Dict[str, Any]:
     today = now.strftime("%Y-%m-%d")
     now_iso = now.isoformat()
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    with db_session() as conn:
+        cursor = conn.cursor()
 
-    # Check how many sessions exist for today's date
-    today_sessions = cursor.execute(
-        "SELECT date_str FROM days WHERE date_str = ? OR date_str LIKE ? ORDER BY date_str ASC;",
-        (today, f"{today}_%")
-    ).fetchall()
+        # Check how many sessions exist for today's date
+        today_sessions = cursor.execute(
+            "SELECT date_str FROM days WHERE date_str = ? OR date_str LIKE ? ORDER BY date_str ASC;",
+            (today, f"{today}_%")
+        ).fetchall()
 
-    if not today_sessions:
-        new_date_str = today
-    else:
-        next_idx = len(today_sessions) + 1
-        new_date_str = f"{today}_S{next_idx}"
+        if not today_sessions:
+            new_date_str = today
+        else:
+            next_idx = len(today_sessions) + 1
+            new_date_str = f"{today}_S{next_idx}"
 
-    cursor.execute(
-        "INSERT INTO days (date_str, status, opened_at, closed_at, sales_revenue) VALUES (?, 'ACTIVE', ?, NULL, 0.0);",
-        (new_date_str, now_iso)
-    )
-
-    # Seed daily_payouts for all active partners with clean is_taken = 0
-    partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
-    for p in partners:
         cursor.execute(
-            "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
-            (new_date_str, p["id"])
+            "INSERT INTO days (date_str, status, opened_at, closed_at, sales_revenue) VALUES (?, 'ACTIVE', ?, NULL, 0.0);",
+            (new_date_str, now_iso)
         )
 
-    conn.commit()
-    conn.close()
+        # Seed daily_payouts for all active partners with clean is_taken = 0
+        partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+        for p in partners:
+            cursor.execute(
+                "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+                (new_date_str, p["id"])
+            )
 
     disp_name = format_session_display_name(new_date_str, now_iso)
     return {
@@ -327,12 +305,9 @@ def close_day_session(day_date: Optional[str] = None) -> Dict[str, Any]:
             return {"error": "Tidak ada sesi buku yang sedang aktif."}
         target = active["date_str"]
 
-    conn = get_connection()
-    cursor = conn.cursor()
     now_iso = datetime.now(WIB).isoformat()
-    cursor.execute("UPDATE days SET status = 'CLOSED', closed_at = ? WHERE date_str = ?;", (now_iso, target))
-    conn.commit()
-    conn.close()
+    with db_session() as conn:
+        conn.execute("UPDATE days SET status = 'CLOSED', closed_at = ? WHERE date_str = ?;", (now_iso, target))
 
     return {
         "closed_session": target,
@@ -347,19 +322,14 @@ def reopen_day_session(day_date: Optional[str] = None) -> bool:
             return False
         target = latest["date_str"]
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE days SET status = 'ACTIVE', closed_at = NULL WHERE date_str = ?;", (target,))
-    conn.commit()
-    conn.close()
+    with db_session() as conn:
+        conn.execute("UPDATE days SET status = 'ACTIVE', closed_at = NULL WHERE date_str = ?;", (target,))
     return True
 
 def create_transaction(req: TransactionCreateRequest, target_date: Optional[str] = None) -> TransactionResponse:
     if target_date:
-        conn = get_connection()
-        cursor = conn.cursor()
-        row = cursor.execute("SELECT date_str, status FROM days WHERE date_str = ?;", (target_date,)).fetchone()
-        conn.close()
+        with db_readonly() as conn:
+            row = conn.execute("SELECT date_str, status FROM days WHERE date_str = ?;", (target_date,)).fetchone()
         if not row:
             raise ValueError(f"Sesi {target_date} tidak ditemukan.")
         if row["status"] != "ACTIVE":
@@ -385,43 +355,39 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
 
     gold_category = "NON_LM" if getattr(req, "gold_category", "").upper() == "NON_LM" else "LM"
 
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "INSERT INTO transactions (id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
-        (trx_id, day_date, item_name, gold_category, req.total_amount, req.notes, req.receipt_image, now_iso)
-    )
-
     shares_details: List[ShareDetail] = []
-    # Cache partners
-    partners_map = {
-        p["id"]: p for p in cursor.execute("SELECT id, name, initials, color FROM partners;").fetchall()
-    }
+    with db_session() as conn:
+        cursor = conn.cursor()
 
-    for s in req.shares:
-        if s.amount <= 0:
-            continue
-        pct = round((s.amount / req.total_amount) * 100.0, 2)
         cursor.execute(
-            "INSERT INTO transaction_shares (transaction_id, partner_id, amount, percentage) VALUES (?, ?, ?, ?);",
-            (trx_id, s.partner_id, s.amount, pct)
+            "INSERT INTO transactions (id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);",
+            (trx_id, day_date, item_name, gold_category, req.total_amount, req.notes, req.receipt_image, now_iso)
         )
-        p_info = partners_map.get(s.partner_id)
-        if p_info:
-            shares_details.append(
-                ShareDetail(
-                    partner_id=s.partner_id,
-                    partner_name=p_info["name"],
-                    partner_initials=p_info["initials"],
-                    partner_color=p_info["color"],
-                    amount=s.amount,
-                    percentage=pct,
-                )
-            )
 
-    conn.commit()
-    conn.close()
+        partners_map = {
+            p["id"]: p for p in cursor.execute("SELECT id, name, initials, color FROM partners;").fetchall()
+        }
+
+        for s in req.shares:
+            if s.amount <= 0:
+                continue
+            pct = round((s.amount / req.total_amount) * 100.0, 2)
+            cursor.execute(
+                "INSERT INTO transaction_shares (transaction_id, partner_id, amount, percentage) VALUES (?, ?, ?, ?);",
+                (trx_id, s.partner_id, s.amount, pct)
+            )
+            p_info = partners_map.get(s.partner_id)
+            if p_info:
+                shares_details.append(
+                    ShareDetail(
+                        partner_id=s.partner_id,
+                        partner_name=p_info["name"],
+                        partner_initials=p_info["initials"],
+                        partner_color=p_info["color"],
+                        amount=s.amount,
+                        percentage=pct,
+                    )
+                )
 
     return TransactionResponse(
         id=trx_id,
@@ -436,30 +402,24 @@ def create_transaction(req: TransactionCreateRequest, target_date: Optional[str]
     )
 
 def delete_transaction(transaction_id: str) -> bool:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM transactions WHERE id = ?;", (transaction_id,))
-    affected = cursor.rowcount > 0
-    conn.commit()
-    conn.close()
-    return affected
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM transactions WHERE id = ?;", (transaction_id,))
+        return cursor.rowcount > 0
 
 def toggle_payout_status(day_date: str, partner_id: int, is_taken: bool) -> bool:
-    conn = get_connection()
-    cursor = conn.cursor()
     now_iso = datetime.now(WIB).isoformat() if is_taken else None
-    cursor.execute(
-        """
-        INSERT INTO daily_payouts (day_date, partner_id, is_taken, taken_at)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(day_date, partner_id) DO UPDATE SET
-            is_taken = excluded.is_taken,
-            taken_at = excluded.taken_at;
-        """,
-        (day_date, partner_id, 1 if is_taken else 0, now_iso)
-    )
-    conn.commit()
-    conn.close()
+    with db_session() as conn:
+        conn.execute(
+            """
+            INSERT INTO daily_payouts (day_date, partner_id, is_taken, taken_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(day_date, partner_id) DO UPDATE SET
+                is_taken = excluded.is_taken,
+                taken_at = excluded.taken_at;
+            """,
+            (day_date, partner_id, 1 if is_taken else 0, now_iso)
+        )
     return True
 
 def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResponse]:
@@ -470,73 +430,65 @@ def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResp
             return []
         target = active["date_str"]
 
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    t_rows = cursor.execute(
-        "SELECT id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
-        (target,)
-    ).fetchall()
-
-    if not t_rows:
-        conn.close()
-        return []
-
-    partners_map = {
-        p["id"]: p for p in cursor.execute("SELECT id, name, initials, color FROM partners;").fetchall()
-    }
-
-    result = []
-    for tr in t_rows:
-        tid = tr["id"]
-        s_rows = cursor.execute(
-            "SELECT partner_id, amount, percentage FROM transaction_shares WHERE transaction_id = ? ORDER BY partner_id ASC;",
-            (tid,)
+    with db_readonly() as conn:
+        t_rows = conn.execute(
+            "SELECT id, day_date, item_name, gold_category, total_amount, notes, receipt_image, created_at FROM transactions WHERE day_date = ? ORDER BY created_at DESC;",
+            (target,)
         ).fetchall()
 
-        shares = []
-        for sr in s_rows:
-            p_info = partners_map.get(sr["partner_id"])
-            if p_info:
-                shares.append(
-                    ShareDetail(
-                        partner_id=sr["partner_id"],
-                        partner_name=p_info["name"],
-                        partner_initials=p_info["initials"],
-                        partner_color=p_info["color"],
-                        amount=sr["amount"],
-                        percentage=sr["percentage"],
+        if not t_rows:
+            return []
+
+        partners_map = {
+            p["id"]: p for p in conn.execute("SELECT id, name, initials, color FROM partners;").fetchall()
+        }
+
+        result = []
+        for tr in t_rows:
+            tid = tr["id"]
+            s_rows = conn.execute(
+                "SELECT partner_id, amount, percentage FROM transaction_shares WHERE transaction_id = ? ORDER BY partner_id ASC;",
+                (tid,)
+            ).fetchall()
+
+            shares = []
+            for sr in s_rows:
+                p_info = partners_map.get(sr["partner_id"])
+                if p_info:
+                    shares.append(
+                        ShareDetail(
+                            partner_id=sr["partner_id"],
+                            partner_name=p_info["name"],
+                            partner_initials=p_info["initials"],
+                            partner_color=p_info["color"],
+                            amount=sr["amount"],
+                            percentage=sr["percentage"],
+                        )
                     )
+
+            result.append(
+                TransactionResponse(
+                    id=tr["id"],
+                    day_date=tr["day_date"],
+                    item_name=tr["item_name"],
+                    gold_category=tr["gold_category"] or "LM",
+                    total_amount=tr["total_amount"],
+                    shares=shares,
+                    notes=tr["notes"],
+                    receipt_image=tr["receipt_image"],
+                    created_at=tr["created_at"],
                 )
-
-        result.append(
-            TransactionResponse(
-                id=tr["id"],
-                day_date=tr["day_date"],
-                item_name=tr["item_name"],
-                gold_category=tr["gold_category"] or "LM",
-                total_amount=tr["total_amount"],
-                shares=shares,
-                notes=tr["notes"],
-                receipt_image=tr["receipt_image"],
-                created_at=tr["created_at"],
             )
-        )
 
-    conn.close()
     return result
 
 def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
-    conn = get_connection()
-    cursor = conn.cursor()
-
     if target_date:
-        cursor.execute("SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE date_str = ?;", (target_date,))
-        row = cursor.fetchone()
-        if not row:
-            conn.close()
-            return _get_empty_closed_board()
-        day_info = dict(row)
+        with db_readonly() as conn:
+            row = conn.execute("SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE date_str = ?;", (target_date,)).fetchone()
+            if not row:
+                return _get_empty_closed_board()
+            day_info = dict(row)
     else:
         active = get_active_session()
         if active:
@@ -554,7 +506,9 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
                 except Exception:
                     closed_note = latest["closed_at"]
 
-            partners = cursor.execute("SELECT id, name, initials, color FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
+            with db_readonly() as conn:
+                partners = conn.execute("SELECT id, name, initials, color FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
+
             payouts_list = [
                 PartnerPayout(
                     partner_id=p["id"],
@@ -569,7 +523,6 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
                 )
                 for p in partners
             ]
-            conn.close()
             return DailyBoardResponse(
                 day_date=latest["date_str"] if latest else "",
                 display_name=f"Buku Kasir Sedang Ditutup (Terakhir: {closed_note})" if closed_note else "Buku Kasir Sedang Ditutup",
@@ -600,123 +553,124 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
 
     day_date = day_info["date_str"]
 
-    # 1. Total capital & transactions
-    tot_row = cursor.execute(
-        "SELECT COUNT(*), COALESCE(SUM(total_amount), 0) FROM transactions WHERE day_date = ?;",
-        (day_date,)
-    ).fetchone()
-    total_trx = tot_row[0]
-    total_capital = float(tot_row[1])
-
-    # Breakdown by category
-    cat_rows = cursor.execute(
-        "SELECT gold_category, COUNT(*), COALESCE(SUM(total_amount), 0) FROM transactions WHERE day_date = ? GROUP BY gold_category;",
-        (day_date,)
-    ).fetchall()
-    total_capital_lm = 0.0
-    total_trx_lm = 0
-    total_capital_non_lm = 0.0
-    total_trx_non_lm = 0
-    for cr in cat_rows:
-        gcat = cr[0]
-        cnt = cr[1]
-        amt = float(cr[2])
-        if gcat == "NON_LM":
-            total_capital_non_lm += amt
-            total_trx_non_lm += cnt
-        else:
-            total_capital_lm += amt
-            total_trx_lm += cnt
-
-    # 2. Bulk Sales & Net Profit (LM, Non-LM, & Total)
-    sales_rev = float(day_info.get("sales_revenue") or 0.0)
-    sales_rev_lm = float(day_info.get("sales_revenue_lm") or 0.0)
-    sales_rev_non_lm = float(day_info.get("sales_revenue_non_lm") or 0.0)
-    if sales_rev_lm > 0 or sales_rev_non_lm > 0:
-        sales_rev = sales_rev_lm + sales_rev_non_lm
-
-    sales_notes = day_info.get("sales_notes")
-    sold_at = day_info.get("sold_at")
-
-    profit_lm = sales_rev_lm - total_capital_lm if sales_rev_lm > 0 else 0.0
-    profit_pct_lm = round((profit_lm / total_capital_lm) * 100.0, 2) if total_capital_lm > 0 and sales_rev_lm > 0 else 0.0
-
-    profit_non_lm = sales_rev_non_lm - total_capital_non_lm if sales_rev_non_lm > 0 else 0.0
-    profit_pct_non_lm = round((profit_non_lm / total_capital_non_lm) * 100.0, 2) if total_capital_non_lm > 0 and sales_rev_non_lm > 0 else 0.0
-
-    net_profit = sales_rev - total_capital if sales_rev > 0 else 0.0
-    profit_pct = round((net_profit / total_capital) * 100.0, 2) if total_capital > 0 and sales_rev > 0 else 0.0
-
-    # 3. Partners and their shares
-    partners = cursor.execute("SELECT id, name, initials, color FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
-
-    # Get payout statuses
-    payout_rows = cursor.execute(
-        "SELECT partner_id, is_taken, taken_at FROM daily_payouts WHERE day_date = ?;",
-        (day_date,)
-    ).fetchall()
-    payout_map = {r["partner_id"]: (bool(r["is_taken"]), r["taken_at"]) for r in payout_rows}
-
-    payouts_list: List[PartnerPayout] = []
-    all_settled = True
-
-    for p in partners:
-        pid = p["id"]
-        calc_row = cursor.execute(
-            """
-            SELECT 
-                COUNT(ts.id), 
-                COALESCE(SUM(ts.amount), 0)
-            FROM transaction_shares ts
-            JOIN transactions t ON ts.transaction_id = t.id
-            WHERE t.day_date = ? AND ts.partner_id = ?;
-            """,
-            (day_date, pid)
+    with db_readonly() as conn:
+        # 1. Total capital & transactions
+        tot_row = conn.execute(
+            "SELECT COUNT(*), COALESCE(SUM(total_amount), 0) FROM transactions WHERE day_date = ?;",
+            (day_date,)
         ).fetchone()
+        total_trx = tot_row[0]
+        total_capital = float(tot_row[1])
 
-        trx_cnt = calc_row[0]
-        tot_modal = float(calc_row[1])
-
-        items_cursor = cursor.execute(
-            """
-            SELECT t.id, t.item_name, ts.amount, ts.percentage, t.created_at
-            FROM transaction_shares ts
-            JOIN transactions t ON ts.transaction_id = t.id
-            WHERE t.day_date = ? AND ts.partner_id = ?
-            ORDER BY t.created_at ASC;
-            """,
-            (day_date, pid)
+        # Breakdown by category
+        cat_rows = conn.execute(
+            "SELECT gold_category, COUNT(*), COALESCE(SUM(total_amount), 0) FROM transactions WHERE day_date = ? GROUP BY gold_category;",
+            (day_date,)
         ).fetchall()
+        total_capital_lm = 0.0
+        total_trx_lm = 0
+        total_capital_non_lm = 0.0
+        total_trx_non_lm = 0
+        for cr in cat_rows:
+            gcat = cr[0]
+            cnt = cr[1]
+            amt = float(cr[2])
+            if gcat == "NON_LM":
+                total_capital_non_lm += amt
+                total_trx_non_lm += cnt
+            else:
+                total_capital_lm += amt
+                total_trx_lm += cnt
 
-        items_list = [
-            {
-                "transaction_id": it["id"],
-                "item_name": it["item_name"],
-                "amount": float(it["amount"]),
-                "amount_formatted": format_rupiah(it["amount"]),
-                "percentage": float(it["percentage"]),
-                "created_at": it["created_at"],
-            }
-            for it in items_cursor
-        ]
+        # 2. Bulk Sales & Net Profit (LM, Non-LM, & Total)
+        sales_rev = float(day_info.get("sales_revenue") or 0.0)
+        sales_rev_lm = float(day_info.get("sales_revenue_lm") or 0.0)
+        sales_rev_non_lm = float(day_info.get("sales_revenue_non_lm") or 0.0)
+        if sales_rev_lm > 0 or sales_rev_non_lm > 0:
+            sales_rev = sales_rev_lm + sales_rev_non_lm
 
-        is_taken, taken_at = payout_map.get(pid, (False, None))
-        if tot_modal > 0 and not is_taken:
-            all_settled = False
+        sales_notes = day_info.get("sales_notes")
+        sold_at = day_info.get("sold_at")
 
-        payouts_list.append(
-            PartnerPayout(
-                partner_id=pid,
-                name=p["name"],
-                initials=p["initials"],
-                color=p["color"],
-                total_modal=tot_modal,
-                transaction_count=trx_cnt,
-                is_taken=is_taken,
-                taken_at=taken_at,
-                items_breakdown=items_list,
+        profit_lm = sales_rev_lm - total_capital_lm if sales_rev_lm > 0 else 0.0
+        profit_pct_lm = round((profit_lm / total_capital_lm) * 100.0, 2) if total_capital_lm > 0 and sales_rev_lm > 0 else 0.0
+
+        profit_non_lm = sales_rev_non_lm - total_capital_non_lm if sales_rev_non_lm > 0 else 0.0
+        profit_pct_non_lm = round((profit_non_lm / total_capital_non_lm) * 100.0, 2) if total_capital_non_lm > 0 and sales_rev_non_lm > 0 else 0.0
+
+        net_profit = sales_rev - total_capital if sales_rev > 0 else 0.0
+        profit_pct = round((net_profit / total_capital) * 100.0, 2) if total_capital > 0 and sales_rev > 0 else 0.0
+
+        # 3. Partners and their shares
+        partners = conn.execute("SELECT id, name, initials, color FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
+
+        # Get payout statuses
+        payout_rows = conn.execute(
+            "SELECT partner_id, is_taken, taken_at FROM daily_payouts WHERE day_date = ?;",
+            (day_date,)
+        ).fetchall()
+        payout_map = {r["partner_id"]: (bool(r["is_taken"]), r["taken_at"]) for r in payout_rows}
+
+        payouts_list: List[PartnerPayout] = []
+        all_settled = True
+
+        for p in partners:
+            pid = p["id"]
+            calc_row = conn.execute(
+                """
+                SELECT 
+                    COUNT(ts.id), 
+                    COALESCE(SUM(ts.amount), 0)
+                FROM transaction_shares ts
+                JOIN transactions t ON ts.transaction_id = t.id
+                WHERE t.day_date = ? AND ts.partner_id = ?;
+                """,
+                (day_date, pid)
+            ).fetchone()
+
+            trx_cnt = calc_row[0]
+            tot_modal = float(calc_row[1])
+
+            items_cursor = conn.execute(
+                """
+                SELECT t.id, t.item_name, ts.amount, ts.percentage, t.created_at
+                FROM transaction_shares ts
+                JOIN transactions t ON ts.transaction_id = t.id
+                WHERE t.day_date = ? AND ts.partner_id = ?
+                ORDER BY t.created_at ASC;
+                """,
+                (day_date, pid)
+            ).fetchall()
+
+            items_list = [
+                {
+                    "transaction_id": it["id"],
+                    "item_name": it["item_name"],
+                    "amount": float(it["amount"]),
+                    "amount_formatted": format_rupiah(it["amount"]),
+                    "percentage": float(it["percentage"]),
+                    "created_at": it["created_at"],
+                }
+                for it in items_cursor
+            ]
+
+            is_taken, taken_at = payout_map.get(pid, (False, None))
+            if tot_modal > 0 and not is_taken:
+                all_settled = False
+
+            payouts_list.append(
+                PartnerPayout(
+                    partner_id=pid,
+                    name=p["name"],
+                    initials=p["initials"],
+                    color=p["color"],
+                    total_modal=tot_modal,
+                    transaction_count=trx_cnt,
+                    is_taken=is_taken,
+                    taken_at=taken_at,
+                    items_breakdown=items_list,
+                )
             )
-        )
 
     formatted_date_indo = format_session_display_name(day_date, day_info.get("opened_at"))
 
@@ -797,8 +751,6 @@ def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
     wa_lines.append("• Sistem pencatatan: *npp.daniandraaa.my.id*")
     whatsapp_rekap = "\n".join(wa_lines)
 
-    conn.close()
-
     return DailyBoardResponse(
         day_date=day_date,
         display_name=formatted_date_indo,
@@ -857,29 +809,27 @@ def _get_empty_closed_board() -> DailyBoardResponse:
     )
 
 def get_history_summary() -> List[Dict[str, Any]]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    rows = cursor.execute("""
-        SELECT 
-            d.date_str,
-            d.status,
-            d.opened_at,
-            d.closed_at,
-            d.sales_revenue,
-            d.sales_revenue_lm,
-            d.sales_revenue_non_lm,
-            d.sales_notes,
-            d.sold_at,
-            COUNT(t.id) as total_trx,
-            COALESCE(SUM(t.total_amount), 0) as total_capital,
-            COALESCE(SUM(CASE WHEN t.gold_category = 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_non_lm,
-            COALESCE(SUM(CASE WHEN t.gold_category != 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_lm
-        FROM days d
-        LEFT JOIN transactions t ON d.date_str = t.day_date
-        GROUP BY d.date_str
-        ORDER BY d.opened_at DESC, d.date_str DESC;
-    """).fetchall()
-    conn.close()
+    with db_readonly() as conn:
+        rows = conn.execute("""
+            SELECT 
+                d.date_str,
+                d.status,
+                d.opened_at,
+                d.closed_at,
+                d.sales_revenue,
+                d.sales_revenue_lm,
+                d.sales_revenue_non_lm,
+                d.sales_notes,
+                d.sold_at,
+                COUNT(t.id) as total_trx,
+                COALESCE(SUM(t.total_amount), 0) as total_capital,
+                COALESCE(SUM(CASE WHEN t.gold_category = 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_non_lm,
+                COALESCE(SUM(CASE WHEN t.gold_category != 'NON_LM' THEN t.total_amount ELSE 0 END), 0) as total_capital_lm
+            FROM days d
+            LEFT JOIN transactions t ON d.date_str = t.day_date
+            GROUP BY d.date_str
+            ORDER BY d.opened_at DESC, d.date_str DESC;
+        """).fetchall()
 
     result = []
     for r in rows:
