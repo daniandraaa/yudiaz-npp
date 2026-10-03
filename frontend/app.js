@@ -150,18 +150,22 @@ function switchTab(tab) {
 }
 
 // ==================== DATA FETCHING ====================
-async function loadAllData() {
+async function loadAllData(silent = false) {
   try {
     const refreshIcon = document.getElementById("refreshIcon");
-    if (refreshIcon) refreshIcon.classList.add("animate-spin");
+    if (refreshIcon && !silent) refreshIcon.classList.add("animate-spin");
 
     // 1. Fetch Partners
     const pRes = await fetch("/api/v1/partners");
     const pData = await pRes.json();
     if (pData.success) {
       state.partners = pData.data;
-      renderSoloButtons();
-      renderPatunganRows();
+      // Only re-render inputs if user is not actively typing in them
+      const isInputActive = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+      if (!isInputActive || state.currentTab !== "input") {
+        renderSoloButtons();
+        renderPatunganRows();
+      }
     }
 
     // 2. Fetch Board (Active session)
@@ -180,10 +184,10 @@ async function loadAllData() {
       renderTransactionsList();
     }
 
-    if (refreshIcon) setTimeout(() => refreshIcon.classList.remove("animate-spin"), 400);
+    if (refreshIcon && !silent) setTimeout(() => refreshIcon.classList.remove("animate-spin"), 400);
   } catch (err) {
     console.error("Failed loading data:", err);
-    showToast("Gagal menyambung ke server", false);
+    if (!silent) showToast("Gagal menyambung ke server", false);
   }
 }
 
@@ -191,6 +195,21 @@ function refreshData() {
   loadAllData();
   showToast("Data berhasil diperbarui");
 }
+
+// Background Live Sync (Keeps all 7-10 partners in sync every 7 seconds)
+setInterval(() => {
+  if (document.hidden) return; // Save battery if phone screen is locked or browser in background
+  const isTyping = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+  if (isTyping && state.currentTab === "input") return; // Don't interrupt cashier typing
+  loadAllData(true);
+}, 7000);
+
+// Auto-sync when user returns to tab / turns screen back on
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    loadAllData(true);
+  }
+});
 
 // ==================== RENDER BOARD ====================
 function renderDailyBoard() {
