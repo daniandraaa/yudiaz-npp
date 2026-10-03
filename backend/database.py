@@ -20,6 +20,8 @@ DEFAULT_PARTNERS = [
     (7, "Partner 7", "P7", "#6366F1"),     # Indigo
 ]
 
+from contextlib import contextmanager
+
 def get_connection() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(DB_PATH), timeout=30.0, check_same_thread=False)
@@ -28,6 +30,28 @@ def get_connection() -> sqlite3.Connection:
     conn.execute("PRAGMA synchronous = NORMAL;")
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
+
+@contextmanager
+def db_session():
+    """Context manager for write transactions that auto-commits or rolls back and always closes."""
+    conn = get_connection()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+@contextmanager
+def db_readonly():
+    """Context manager for read-only queries that always closes."""
+    conn = get_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def init_db() -> None:
     conn = get_connection()
