@@ -260,28 +260,11 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <span id="sessionStatusBadge" class="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35">SESI AKTIF</span>
+        <span id="sessionStatusBadge" class="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35">HARI INI • AKTIF</span>
         <button onclick="refreshData()" class="text-stone-500 hover:text-stone-900 dark:text-amber-200/70 dark:hover:text-white p-1 rounded-lg hover:bg-stone-200/60 dark:hover:bg-maroon-800 transition-colors" title="Segarkan Data Real-Time">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
         </button>
       </div>
-    </div>
-
-    <!-- EXPLICIT BUKA BUKU BANNER (WHEN CLOSED) -->
-    <div id="bookClosedBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-50 dark:from-maroon-950 dark:via-maroon-900 dark:to-maroon-950 border border-amber-300 dark:border-gold-500/40 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
-      <div class="flex items-center gap-3 text-center sm:text-left">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-gold-400 flex items-center justify-center shrink-0 border border-amber-500/40 shadow-xs">
-          <i data-lucide="book-lock" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide">BUKU KASIR SEDANG DITUTUP</h3>
-          <p class="text-xs text-stone-600 dark:text-amber-200/70">Klik tombol di samping untuk mencatat tanggal &amp; jam buka operasional hari ini.</p>
-        </div>
-      </div>
-      <button onclick="promptOpenSession()" class="w-full sm:w-auto py-2.5 px-5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]">
-        <i data-lucide="book-open" class="w-4 h-4"></i>
-        <span>BUKA BUKU HARI INI</span>
-      </button>
     </div>
 
     <!-- HERO: TOTAL REKONSILIASI MODAL EMAS CARD -->
@@ -536,35 +519,16 @@
       </div>
 
       <!-- Bottom Action Bar -->
-      <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
-        <button onclick="copyWhatsAppRekap()" class="flex-1 py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]">
+      <div class="pt-2">
+        <button onclick="copyWhatsAppRekap()" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]">
           <i data-lucide="copy" class="w-4 h-4"></i>
           <span>Salin Rekap Pengembalian Modal ke WhatsApp</span>
-        </button>
-        <button id="mainSessionToggleBtn" onclick="handleMainSessionAction()" class="py-3 px-4 rounded-xl luxury-well hover:border-gold-500/50 text-stone-700 dark:text-amber-100/80 font-mono text-xs flex items-center justify-center gap-2 transition-all">
-          <i data-lucide="lock" class="w-4 h-4 text-amber-600 dark:text-gold-400" id="mainSessionToggleIcon"></i>
-          <span id="mainSessionToggleText">Tutup Buku Hari Ini</span>
         </button>
       </div>
     </section>
 
     <!-- VIEW 2: FORM CATAT BELI EMAS (INPUT CEPAT) -->
     <section id="viewInput" class="hidden space-y-4">
-      <!-- Warning if Book is Closed -->
-      <div id="closedWarningInForm" class="hidden p-5 rounded-2xl luxury-card text-center space-y-3">
-        <div class="inline-flex p-3 rounded-2xl bg-amber-500/15 text-amber-700 dark:text-gold-400 border border-amber-500/30 mb-0.5">
-          <i data-lucide="lock" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif">BUKU TRANSAKSI SEDANG DITUTUP</h3>
-        <p class="text-xs text-stone-600 dark:text-amber-200/70 max-w-md mx-auto">Untuk mencatat transaksi pembelian emas, silakan klik 'Buka Buku' di bawah. Tanggal dan jam buka operasional akan tercatat secara resmi.</p>
-        <div class="pt-1">
-          <button type="button" onclick="promptOpenSession()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs shadow-md transition-all active:scale-[0.98]">
-            <i data-lucide="book-open" class="w-4 h-4"></i>
-            <span>BUKA BUKU TRANSAKSI BARU</span>
-          </button>
-        </div>
-      </div>
-
       <div id="formCatatBeliContainer" class="luxury-card rounded-2xl p-5 sm:p-6 space-y-4.5">
         <div>
           <h2 class="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2 font-serif tracking-wide">
@@ -1065,6 +1029,6 @@
   </div>
 
   <!-- Main Application Script with Cache Busting Version -->
-  <script src="/static/app.js?v=20261003_02"></script>
+  <script src="/static/app.js?v=20261003_03"></script>
 </body>
 </html>

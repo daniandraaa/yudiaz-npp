@@ -165,21 +165,89 @@ def delete_partner(partner_id: int) -> Dict[str, Any]:
                 "message": "Pemodal berhasil dihapus secara permanen."
             }
 
-def get_active_session() -> Optional[Dict[str, Any]]:
-    """Return the currently ACTIVE session if one exists. Never auto-creates."""
-    with db_readonly() as conn:
-        row = conn.execute(
-            "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE status = 'ACTIVE' ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
-        ).fetchone()
-        return dict(row) if row else None
+def get_current_day_str() -> str:
+    """Return today's date string YYYY-MM-DD in Asia/Jakarta (WIB)."""
+    return datetime.now(WIB).strftime("%Y-%m-%d")
 
-def get_latest_session() -> Optional[Dict[str, Any]]:
-    """Return the most recently created session (ACTIVE or CLOSED)."""
-    with db_readonly() as conn:
-        row = conn.execute(
-            "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days ORDER BY opened_at DESC, date_str DESC LIMIT 1;"
+def get_or_create_current_day() -> Dict[str, Any]:
+    """
+    Automatic Daily Lifecycle:
+    - Rolls over automatically at 00:00 WIB every day.
+    - Closes any past days (date_str < today) left in ACTIVE state so they are sealed into history.
+    - Automatically creates today's record (YYYY-MM-DD) as ACTIVE.
+    - Ensures daily_payouts exists for all active partners with clean is_taken = 0.
+    """
+    today_str = get_current_day_str()
+    now_iso = datetime.now(WIB).isoformat()
+    
+    with db_session() as conn:
+        cursor = conn.cursor()
+        
+        # 1. Auto-close previous days
+        cursor.execute(
+            """
+            UPDATE days 
+            SET status = 'CLOSED', closed_at = COALESCE(closed_at, ?) 
+            WHERE date_str < ? AND status = 'ACTIVE';
+            """,
+            (now_iso, today_str)
+        )
+        
+        # 2. Check today's record
+        row = cursor.execute(
+            """
+            SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at 
+            FROM days 
+            WHERE date_str = ?;
+            """,
+            (today_str,)
         ).fetchone()
-        return dict(row) if row else None
+        
+        if not row:
+            cursor.execute(
+                """
+                INSERT INTO days (date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm) 
+                VALUES (?, 'ACTIVE', ?, NULL, 0.0, 0.0, 0.0);
+                """,
+                (today_str, now_iso)
+            )
+            row = cursor.execute(
+                """
+                SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at 
+                FROM days 
+                WHERE date_str = ?;
+                """,
+                (today_str,)
+            ).fetchone()
+        elif row["status"] != "ACTIVE":
+            # Keep today ACTIVE
+            cursor.execute("UPDATE days SET status = 'ACTIVE', closed_at = NULL WHERE date_str = ?;", (today_str,))
+            row = cursor.execute(
+                """
+                SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at 
+                FROM days 
+                WHERE date_str = ?;
+                """,
+                (today_str,)
+            ).fetchone()
+            
+        # 3. Seed daily_payouts for all active partners
+        partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
+        for p in partners:
+            cursor.execute(
+                "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
+                (today_str, p["id"])
+            )
+            
+        return dict(row)
+
+def get_active_session() -> Dict[str, Any]:
+    """Compatibility: returns today's active day."""
+    return get_or_create_current_day()
+
+def get_latest_session() -> Dict[str, Any]:
+    """Compatibility: returns today's active day."""
+    return get_or_create_current_day()
 
 def record_session_sale(
     day_date: Optional[str],
@@ -189,18 +257,7 @@ def record_session_sale(
     sales_notes: Optional[str] = None
 ) -> Dict[str, Any]:
     """Record gold bulk sales proceeds (LM & Non-LM) and calculate net profit vs capital."""
-    target = day_date
-    if not target:
-        active = get_active_session()
-        if active:
-            target = active["date_str"]
-        else:
-            latest = get_latest_session()
-            if latest:
-                target = latest["date_str"]
-    
-    if not target:
-        raise ValueError("Tidak ada sesi buku yang dapat dicatat hasil penjualannya.")
+    target = day_date if day_date else get_or_create_current_day()["date_str"]
 
     rev_lm = float(sales_revenue_lm or 0.0)
     rev_non_lm = float(sales_revenue_non_lm or 0.0)
@@ -239,109 +296,30 @@ def record_session_sale(
     }
 
 def open_day_session() -> Dict[str, Any]:
-    """
-    Explicitly called when Bang Fauzan / Kasir clicks 'Buka Buku'.
-    Captures the EXACT current day and time (WIB), starts with clean 0 modal.
-    """
-    active = get_active_session()
-    if active:
-        disp = format_session_display_name(active["date_str"], active.get("opened_at"))
-        return {
-            "already_active": True,
-            "date_str": active["date_str"],
-            "display_name": disp,
-            "message": f"Sesi {disp} sudah aktif."
-        }
-
-    now = datetime.now(WIB)
-    today = now.strftime("%Y-%m-%d")
-    now_iso = now.isoformat()
-
-    with db_session() as conn:
-        cursor = conn.cursor()
-
-        # Check how many sessions exist for today's date
-        today_sessions = cursor.execute(
-            "SELECT date_str FROM days WHERE date_str = ? OR date_str LIKE ? ORDER BY date_str ASC;",
-            (today, f"{today}_%")
-        ).fetchall()
-
-        if not today_sessions:
-            new_date_str = today
-        else:
-            next_idx = len(today_sessions) + 1
-            new_date_str = f"{today}_S{next_idx}"
-
-        cursor.execute(
-            "INSERT INTO days (date_str, status, opened_at, closed_at, sales_revenue) VALUES (?, 'ACTIVE', ?, NULL, 0.0);",
-            (new_date_str, now_iso)
-        )
-
-        # Seed daily_payouts for all active partners with clean is_taken = 0
-        partners = cursor.execute("SELECT id FROM partners WHERE is_active = 1;").fetchall()
-        for p in partners:
-            cursor.execute(
-                "INSERT OR IGNORE INTO daily_payouts (day_date, partner_id, is_taken) VALUES (?, ?, 0);",
-                (new_date_str, p["id"])
-            )
-
-    disp_name = format_session_display_name(new_date_str, now_iso)
+    """Automatic daily model: ensures today's date is active."""
+    day = get_or_create_current_day()
+    disp = format_session_display_name(day["date_str"], day.get("opened_at"))
     return {
-        "date_str": new_date_str,
+        "date_str": day["date_str"],
         "status": "ACTIVE",
-        "opened_at": now_iso,
-        "display_name": disp_name,
-        "message": f"Buku berhasil dibuka: {disp_name}"
+        "opened_at": day["opened_at"],
+        "display_name": disp,
+        "message": f"Buku kasir hari ini aktif: {disp}"
     }
 
 def close_day_session(day_date: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Explicitly called when Bang Fauzan / Kasir clicks 'Tutup Buku'.
-    Stamps closed_at timestamp, moves session to history, and LEAVES BOOK CLOSED.
-    DOES NOT automatically open a new session.
-    """
-    target = day_date
-    if not target:
-        active = get_active_session()
-        if not active:
-            return {"error": "Tidak ada sesi buku yang sedang aktif."}
-        target = active["date_str"]
-
-    now_iso = datetime.now(WIB).isoformat()
-    with db_session() as conn:
-        conn.execute("UPDATE days SET status = 'CLOSED', closed_at = ? WHERE date_str = ?;", (now_iso, target))
-
+    """Automatic daily model: day closes automatically at 00:00."""
+    day = get_or_create_current_day()
     return {
-        "closed_session": target,
-        "message": f"Sesi {target} berhasil ditutup & diarsipkan. Status buku sekarang DITUTUP."
+        "closed_session": day["date_str"],
+        "message": "Sistem otomatis berganti hari pada pukul 00:00 WIB."
     }
 
 def reopen_day_session(day_date: Optional[str] = None) -> bool:
-    target = day_date
-    if not target:
-        latest = get_latest_session()
-        if not latest:
-            return False
-        target = latest["date_str"]
-
-    with db_session() as conn:
-        conn.execute("UPDATE days SET status = 'ACTIVE', closed_at = NULL WHERE date_str = ?;", (target,))
     return True
 
 def create_transaction(req: TransactionCreateRequest, target_date: Optional[str] = None) -> TransactionResponse:
-    if target_date:
-        with db_readonly() as conn:
-            row = conn.execute("SELECT date_str, status FROM days WHERE date_str = ?;", (target_date,)).fetchone()
-        if not row:
-            raise ValueError(f"Sesi {target_date} tidak ditemukan.")
-        if row["status"] != "ACTIVE":
-            raise ValueError(f"Sesi {target_date} sudah ditutup.")
-        day_date = target_date
-    else:
-        active = get_active_session()
-        if not active:
-            raise ValueError("Buku transaksi sedang ditutup. Silakan klik 'Buka Buku Baru' terlebih dahulu sebelum mencatat pembelian.")
-        day_date = active["date_str"]
+    day_date = target_date if target_date else get_or_create_current_day()["date_str"]
 
     # Validate sum of shares matches total_amount
     total_shares = sum(s.amount for s in req.shares)
@@ -425,12 +403,7 @@ def toggle_payout_status(day_date: str, partner_id: int, is_taken: bool) -> bool
     return True
 
 def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResponse]:
-    target = day_date
-    if not target:
-        active = get_active_session()
-        if not active:
-            return []
-        target = active["date_str"]
+    target = day_date if day_date else get_or_create_current_day()["date_str"]
 
     with db_readonly() as conn:
         t_rows = conn.execute(
@@ -487,71 +460,13 @@ def get_day_transactions(day_date: Optional[str] = None) -> List[TransactionResp
 def get_daily_board(target_date: Optional[str] = None) -> DailyBoardResponse:
     if target_date:
         with db_readonly() as conn:
-            row = conn.execute("SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE date_str = ?;", (target_date,)).fetchone()
-            if not row:
-                return _get_empty_closed_board()
-            day_info = dict(row)
+            row = conn.execute(
+                "SELECT date_str, status, opened_at, closed_at, sales_revenue, sales_revenue_lm, sales_revenue_non_lm, sales_notes, sold_at FROM days WHERE date_str = ?;",
+                (target_date,)
+            ).fetchone()
+        day_info = dict(row) if row else get_or_create_current_day()
     else:
-        active = get_active_session()
-        if active:
-            day_info = active
-        else:
-            # Book is currently CLOSED!
-            latest = get_latest_session()
-            closed_note = ""
-            if latest and latest.get("closed_at"):
-                try:
-                    dt_c = datetime.fromisoformat(latest["closed_at"])
-                    days_indo = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-                    dname = days_indo[dt_c.weekday()]
-                    closed_note = f"{dname}, {dt_c.day}/{dt_c.month} • {dt_c.strftime('%H:%M WIB')}"
-                except Exception:
-                    closed_note = latest["closed_at"]
-
-            with db_readonly() as conn:
-                partners = conn.execute("SELECT id, name, initials, color FROM partners WHERE is_active = 1 ORDER BY id ASC;").fetchall()
-
-            payouts_list = [
-                PartnerPayout(
-                    partner_id=p["id"],
-                    name=p["name"],
-                    initials=p["initials"],
-                    color=p["color"],
-                    total_modal=0.0,
-                    transaction_count=0,
-                    is_taken=False,
-                    taken_at=None,
-                    items_breakdown=[],
-                )
-                for p in partners
-            ]
-            return DailyBoardResponse(
-                day_date=latest["date_str"] if latest else "",
-                display_name=f"Buku Kasir Sedang Ditutup (Terakhir: {closed_note})" if closed_note else "Buku Kasir Sedang Ditutup",
-                status="CLOSED",
-                opened_at="",
-                closed_at=latest["closed_at"] if latest else None,
-                total_capital=0.0,
-                total_transactions=0,
-                sales_revenue=0.0,
-                sales_revenue_lm=0.0,
-                sales_revenue_non_lm=0.0,
-                total_capital_lm=0.0,
-                total_capital_non_lm=0.0,
-                total_trx_lm=0,
-                total_trx_non_lm=0,
-                profit_lm=0.0,
-                profit_pct_lm=0.0,
-                profit_non_lm=0.0,
-                profit_pct_non_lm=0.0,
-                net_profit=0.0,
-                profit_percentage=0.0,
-                sales_notes=None,
-                sold_at=None,
-                payouts=payouts_list,
-                all_settled=True,
-                whatsapp_rekap="Buku kasir sedang ditutup.",
-            )
+        day_info = get_or_create_current_day()
 
     day_date = day_info["date_str"]
 

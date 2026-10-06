@@ -175,19 +175,7 @@ def get_receipt_image(filename: str):
 # 6. Payout Toggle Endpoint (Cash taken checklist)
 @app.post("/api/v1/payout/toggle")
 def toggle_payout(req: TogglePayoutRequest, date: Optional[str] = Query(None)):
-    if date:
-        target_date = date
-    else:
-        active = crud.get_active_session()
-        if active:
-            target_date = active["date_str"]
-        else:
-            latest = crud.get_latest_session()
-            target_date = latest["date_str"] if latest else ""
-
-    if not target_date:
-        raise HTTPException(status_code=400, detail="Tidak ada sesi aktif")
-
+    target_date = date if date else crud.get_or_create_current_day()["date_str"]
     crud.toggle_payout_status(target_date, req.partner_id, req.is_taken)
     return {"success": True, "message": "Status penarikan cash berhasil diperbarui"}
 
