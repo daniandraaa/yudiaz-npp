@@ -1,13 +1,25 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Beli Emas Makassar — No Pusing Pusing (NPP)</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <meta name="theme-color" content="#7B1128">
+  <meta name="theme-color" content="#F8F6F0">
   
+  <!-- Anti-flicker Theme Script: Default to Light Luxury -->
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('npp_theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch(e) {}
+  </script>
+
   <!-- Premium Fonts: Cinzel (Luxury Roman Serif), Plus Jakarta Sans (Modern UI), JetBrains Mono (Precision Financials) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,52 +74,119 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    /* Prevent rubber-banding on iOS mobile */
+    /* CSS Variables for Luxury Light & Dark Theming */
+    :root {
+      --bg-body: #F8F6F0;
+      --bg-card: #FFFFFF;
+      --bg-card-glass: rgba(255, 255, 255, 0.94);
+      --bg-well: #F8F5EE;
+      --bg-well-alt: #F1EBDD;
+      --border-card: rgba(197, 155, 39, 0.28);
+      --border-well: #E5DAC6;
+      --border-subtle: #EFE8DA;
+      --text-main: #1A1412;
+      --text-heading: #140E0C;
+      --text-muted: #685E57;
+      --text-subtle: #8A7E74;
+      --shadow-card: 0 10px 30px -5px rgba(120, 90, 20, 0.07), 0 2px 8px -2px rgba(0, 0, 0, 0.03);
+      --shadow-glow: 0 0 25px rgba(212, 175, 55, 0.22);
+      --gold-text-grad: linear-gradient(135deg, #9E6B08 0%, #C99718 35%, #8A5900 70%, #B8860B 100%);
+      --gold-bg-grad: linear-gradient(135deg, #ECC86A 0%, #D4AF37 45%, #B8891C 100%);
+      --gold-btn-text: #1A130B;
+    }
+
+    html.dark {
+      --bg-body: #0A0204;
+      --bg-card: linear-gradient(180deg, rgba(30, 8, 16, 0.95) 0%, rgba(17, 4, 9, 0.96) 100%);
+      --bg-card-glass: rgba(22, 5, 11, 0.92);
+      --bg-well: rgba(10, 2, 4, 0.85);
+      --bg-well-alt: rgba(22, 5, 11, 0.85);
+      --border-card: rgba(212, 175, 55, 0.25);
+      --border-well: rgba(67, 18, 35, 0.8);
+      --border-subtle: rgba(94, 24, 49, 0.5);
+      --text-main: #F8FAFC;
+      --text-heading: #FFFFFF;
+      --text-muted: rgba(253, 230, 138, 0.75);
+      --text-subtle: #94A3B8;
+      --shadow-card: 0 4px 25px -3px rgba(0, 0, 0, 0.6), 0 0 15px -3px rgba(123, 17, 40, 0.2);
+      --shadow-glow: 0 0 20px rgba(212, 175, 55, 0.18), inset 0 0 12px rgba(212, 175, 55, 0.05);
+      --gold-text-grad: linear-gradient(135deg, #FFF9D2 0%, #F5D77F 25%, #D4AF37 55%, #AA8222 85%, #F5D77F 100%);
+      --gold-bg-grad: linear-gradient(135deg, #F5D77F 0%, #D4AF37 45%, #AA8222 100%);
+      --gold-btn-text: #0A0204;
+    }
+
+    /* Body Background Styling */
     body {
-      background-color: #0A0204;
+      background-color: var(--bg-body);
+      background-image: 
+        radial-gradient(circle at 50% -10%, rgba(212, 175, 55, 0.14) 0%, transparent 60%),
+        radial-gradient(circle at 90% 35%, rgba(123, 17, 40, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 10% 70%, rgba(180, 130, 40, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 110%, rgba(212, 175, 55, 0.12) 0%, transparent 55%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    html.dark body {
       background-image: 
         radial-gradient(circle at 50% -10%, rgba(123, 17, 40, 0.45) 0%, transparent 60%),
         radial-gradient(circle at 90% 35%, rgba(94, 24, 49, 0.22) 0%, transparent 50%),
         radial-gradient(circle at 10% 70%, rgba(67, 18, 35, 0.25) 0%, transparent 50%),
         radial-gradient(circle at 50% 110%, rgba(123, 17, 40, 0.35) 0%, transparent 55%);
-      background-attachment: fixed;
-      color: #F8FAFC;
-      -webkit-tap-highlight-color: transparent;
     }
 
     /* Metallic Gold Text */
     .gold-metallic-text {
-      background: linear-gradient(135deg, #FFF9D2 0%, #F5D77F 25%, #D4AF37 55%, #AA8222 85%, #F5D77F 100%);
+      background: var(--gold-text-grad);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     /* Metallic Gold Background with subtle bronze depth */
     .gold-gradient-bg {
-      background: linear-gradient(135deg, #F5D77F 0%, #D4AF37 45%, #AA8222 100%);
+      background: var(--gold-bg-grad);
+      color: var(--gold-btn-text);
     }
 
     .gold-gradient-bg-hover:hover {
-      background: linear-gradient(135deg, #FFF2A8 0%, #E2BE46 45%, #B88B25 100%);
+      filter: brightness(1.05);
     }
 
     /* Subtle Gold Outline Glow */
     .gold-box-glow {
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.18), inset 0 0 12px rgba(212, 175, 55, 0.05);
+      box-shadow: var(--shadow-glow);
     }
 
-    /* Luxury Maroon Surface with Gold Tinted Border */
-    .maroon-glass {
-      background: rgba(22, 5, 11, 0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(212, 175, 55, 0.18);
+    /* Luxury Surface Cards */
+    .luxury-card, .maroon-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      box-shadow: var(--shadow-card);
+      color: var(--text-main);
     }
 
-    .maroon-card {
-      background: linear-gradient(180deg, rgba(30, 8, 16, 0.95) 0%, rgba(17, 4, 9, 0.96) 100%);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      box-shadow: 0 4px 25px -3px rgba(0, 0, 0, 0.6), 0 0 15px -3px rgba(123, 17, 40, 0.2);
+    /* Luxury Frosted Glass */
+    .luxury-glass, .maroon-glass {
+      background: var(--bg-card-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-color: var(--border-card);
+      box-shadow: 0 4px 20px rgba(120, 90, 20, 0.05);
+    }
+
+    /* Luxury Wells / Sub-panels */
+    .luxury-well {
+      background: var(--bg-well);
+      border: 1px solid var(--border-well);
+      color: var(--text-main);
+    }
+
+    .luxury-well-alt {
+      background: var(--bg-well-alt);
+      border: 1px solid var(--border-well);
+      color: var(--text-main);
     }
 
     .hide-scrollbar::-webkit-scrollbar {
@@ -122,35 +201,45 @@
 <body class="font-sans antialiased min-h-screen flex flex-col pb-24 md:pb-8 select-none">
 
   <!-- TOP LUXURY HEADER -->
-  <header class="sticky top-0 z-40 maroon-glass border-b border-gold-500/25 px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+  <header class="sticky top-0 z-40 luxury-glass border-b border-gold-500/30 px-4 py-3">
     <div class="max-w-4xl mx-auto flex items-center justify-between gap-2">
       
       <!-- Brand & Emblem -->
       <div class="flex items-center gap-3 min-w-0">
         <div class="relative shrink-0">
-          <img src="/static/logo.png" alt="Beli Emas Makassar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-2 ring-gold-400/70 shadow-[0_0_15px_rgba(212,175,55,0.4)] object-cover bg-maroon-950">
-          <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-maroon-950" title="Sistem Aktif"></div>
+          <img src="/static/logo.png" alt="Beli Emas Makassar" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full ring-2 ring-gold-400/80 shadow-[0_0_15px_rgba(212,175,55,0.35)] object-cover bg-amber-50 dark:bg-maroon-950">
+          <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-maroon-950" title="Sistem Aktif"></div>
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2">
             <h1 class="font-serif text-sm sm:text-base font-extrabold tracking-wider gold-metallic-text truncate">BELI EMAS MAKASSAR</h1>
-            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-gold-500/15 text-gold-300 border border-gold-500/40 shrink-0">NPP</span>
+            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-gold-300 border border-amber-500/40 shrink-0">NPP</span>
           </div>
-          <p class="text-[10px] text-amber-200/70 truncate flex items-center gap-1">
+          <p class="text-[10px] text-stone-600 dark:text-amber-200/70 truncate flex items-center gap-1">
             <span>Konsorsium Modal Emas</span>
-            <span class="text-gold-500/50">•</span>
-            <span class="text-gold-300/90 font-medium">Bang Fauzan &amp; Tim</span>
+            <span class="text-amber-600/50 dark:text-gold-500/50">•</span>
+            <span class="text-amber-800 dark:text-gold-300/90 font-medium">Bang Fauzan &amp; Tim</span>
           </p>
         </div>
       </div>
 
       <!-- Header Action Buttons -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button onclick="openSettingsModal()" class="p-2 sm:px-3 sm:py-2 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/30 text-amber-100/90 hover:text-white transition-all flex items-center gap-1.5 shadow-sm" title="Pengaturan Nama Pemodal">
-          <i data-lucide="settings" class="w-4 h-4 text-gold-400"></i>
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleTheme()" id="themeToggleBtn" class="p-2 sm:px-3 sm:py-2 rounded-xl luxury-well hover:border-gold-500/50 transition-all flex items-center gap-1.5 shadow-xs" title="Ganti Mode Tampilan (Terang / Gelap)">
+          <i data-lucide="sun" id="themeSunIcon" class="w-4 h-4 text-amber-600 dark:hidden"></i>
+          <i data-lucide="moon" id="themeMoonIcon" class="w-4 h-4 text-gold-400 hidden dark:block"></i>
+          <span class="hidden sm:inline text-xs font-semibold text-stone-700 dark:text-amber-100" id="themeToggleText">Mode Terang</span>
+        </button>
+
+        <!-- Partner Settings Button -->
+        <button onclick="openSettingsModal()" class="p-2 sm:px-3 sm:py-2 rounded-xl luxury-well hover:border-gold-500/50 text-stone-700 dark:text-amber-100/90 transition-all flex items-center gap-1.5 shadow-xs" title="Pengaturan Nama Pemodal">
+          <i data-lucide="settings" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
           <span class="hidden sm:inline text-xs font-semibold">Partner</span>
         </button>
-        <button onclick="copyWhatsAppRekap()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-[0_0_14px_rgba(16,185,129,0.35)] transition-all active:scale-[0.97]">
+
+        <!-- WhatsApp Rekap Copy Button -->
+        <button onclick="copyWhatsAppRekap()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all active:scale-[0.97]">
           <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Salin WA</span>
         </button>
@@ -162,51 +251,51 @@
   <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-4 space-y-4">
 
     <!-- DATE & STATUS BAR -->
-    <div class="flex items-center justify-between bg-maroon-900/80 p-3 rounded-2xl border border-gold-500/20 text-xs">
+    <div class="flex items-center justify-between luxury-well p-3 rounded-2xl text-xs">
       <div class="flex items-center gap-2.5">
-        <div id="sessionIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></div>
-        <div class="flex items-center gap-1.5 text-slate-300 font-mono text-[11px] sm:text-xs">
-          <i data-lucide="calendar" class="w-3.5 h-3.5 text-gold-400"></i>
+        <div id="sessionIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse"></div>
+        <div class="flex items-center gap-1.5 text-stone-700 dark:text-slate-300 font-mono text-[11px] sm:text-xs">
+          <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
           <span id="currentDateDisplay">Memuat tanggal...</span>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <span id="sessionStatusBadge" class="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35">SESI AKTIF</span>
-        <button onclick="refreshData()" class="text-amber-200/70 hover:text-white p-1 rounded-lg hover:bg-maroon-800 transition-colors" title="Segarkan Data Real-Time">
+        <span id="sessionStatusBadge" class="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35">SESI AKTIF</span>
+        <button onclick="refreshData()" class="text-stone-500 hover:text-stone-900 dark:text-amber-200/70 dark:hover:text-white p-1 rounded-lg hover:bg-stone-200/60 dark:hover:bg-maroon-800 transition-colors" title="Segarkan Data Real-Time">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refreshIcon"></i>
         </button>
       </div>
     </div>
 
     <!-- EXPLICIT BUKA BUKU BANNER (WHEN CLOSED) -->
-    <div id="bookClosedBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-maroon-950 via-maroon-900 to-maroon-950 border border-gold-500/40 shadow-[0_0_25px_rgba(212,175,55,0.18)] flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div id="bookClosedBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-50 dark:from-maroon-950 dark:via-maroon-900 dark:to-maroon-950 border border-amber-300 dark:border-gold-500/40 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3 text-center sm:text-left">
-        <div class="w-10 h-10 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/40 shadow-sm">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-gold-400 flex items-center justify-center shrink-0 border border-amber-500/40 shadow-xs">
           <i data-lucide="book-lock" class="w-5 h-5"></i>
         </div>
         <div>
-          <h3 class="text-sm font-bold text-white font-serif tracking-wide">BUKU KASIR SEDANG DITUTUP</h3>
-          <p class="text-xs text-amber-200/70">Klik tombol di samping untuk mencatat tanggal &amp; jam buka operasional hari ini.</p>
+          <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide">BUKU KASIR SEDANG DITUTUP</h3>
+          <p class="text-xs text-stone-600 dark:text-amber-200/70">Klik tombol di samping untuk mencatat tanggal &amp; jam buka operasional hari ini.</p>
         </div>
       </div>
-      <button onclick="promptOpenSession()" class="w-full sm:w-auto py-2.5 px-5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(212,175,55,0.4)] transition-all active:scale-[0.98]">
+      <button onclick="promptOpenSession()" class="w-full sm:w-auto py-2.5 px-5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]">
         <i data-lucide="book-open" class="w-4 h-4"></i>
         <span>BUKA BUKU HARI INI</span>
       </button>
     </div>
 
     <!-- HERO: TOTAL REKONSILIASI MODAL EMAS CARD -->
-    <div class="relative overflow-hidden maroon-card p-5 sm:p-6 rounded-2xl border border-gold-500/40 gold-box-glow">
+    <div class="relative overflow-hidden luxury-card p-5 sm:p-6 rounded-2xl gold-box-glow">
       <!-- Decorative radial ambient gold light -->
-      <div class="absolute -right-10 -top-10 w-44 h-44 bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-maroon-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -right-10 -top-10 w-44 h-44 bg-amber-400/10 dark:bg-gold-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-amber-500/10 dark:bg-maroon-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
         <div>
           <div class="flex items-center gap-2">
-            <span class="w-1.5 h-4 bg-gold-400 rounded-full"></span>
-            <span class="text-[11px] font-mono uppercase tracking-wider text-amber-200/80 font-bold flex items-center gap-1.5">
-              <i data-lucide="vault" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span class="w-1.5 h-4 bg-amber-500 dark:bg-gold-400 rounded-full"></span>
+            <span class="text-[11px] font-mono uppercase tracking-wider text-stone-600 dark:text-amber-200/80 font-bold flex items-center gap-1.5">
+              <i data-lucide="vault" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
               Total Modal Wajib Ditarik di Meja Kasir:
             </span>
           </div>
@@ -215,49 +304,49 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3 bg-maroon-950/80 px-4 py-2.5 rounded-xl border border-gold-500/25 text-xs font-mono">
+        <div class="flex items-center gap-3 luxury-well px-4 py-2.5 rounded-xl text-xs font-mono">
           <div>
-            <div class="text-[10px] text-slate-400">Transaksi</div>
-            <div class="text-sm font-bold text-white" id="heroTotalTrx">0 trx</div>
+            <div class="text-[10px] text-stone-500 dark:text-slate-400">Transaksi</div>
+            <div class="text-sm font-bold text-stone-900 dark:text-white" id="heroTotalTrx">0 trx</div>
           </div>
-          <div class="w-px h-7 bg-maroon-700"></div>
+          <div class="w-px h-7 bg-stone-300 dark:bg-maroon-700"></div>
           <div>
-            <div class="text-[10px] text-slate-400">Status Ambil</div>
-            <div class="text-sm font-bold text-emerald-400" id="heroSettledCount">0 / 7 Lunas</div>
+            <div class="text-[10px] text-stone-500 dark:text-slate-400">Status Ambil</div>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400" id="heroSettledCount">0 / 7 Lunas</div>
           </div>
         </div>
       </div>
 
       <!-- Settlement Progress Bar -->
-      <div class="mt-4 pt-3.5 border-t border-maroon-700/80 relative z-10">
-        <div class="flex justify-between text-[11px] font-mono text-slate-300 mb-1.5">
+      <div class="mt-4 pt-3.5 border-t border-stone-200 dark:border-maroon-700/80 relative z-10">
+        <div class="flex justify-between text-[11px] font-mono text-stone-600 dark:text-slate-300 mb-1.5">
           <span class="flex items-center gap-1.5">
-            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-gold-400"></i>
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
             Progres Pengembalian Kasir Sore
           </span>
-          <span id="settlementPercentText" class="font-bold text-gold-300">0% (Rp 0)</span>
+          <span id="settlementPercentText" class="font-bold text-amber-800 dark:text-gold-300">0% (Rp 0)</span>
         </div>
-        <div class="w-full bg-maroon-950 h-2.5 rounded-full overflow-hidden border border-maroon-700/90 p-0.5">
-          <div id="settlementProgressBar" class="h-full rounded-full gold-gradient-bg transition-all duration-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]" style="width: 0%"></div>
+        <div class="w-full bg-stone-200/80 dark:bg-maroon-950 h-2.5 rounded-full overflow-hidden border border-stone-300/80 dark:border-maroon-700/90 p-0.5">
+          <div id="settlementProgressBar" class="h-full rounded-full gold-gradient-bg transition-all duration-500 shadow-sm" style="width: 0%"></div>
         </div>
       </div>
     </div>
 
     <!-- NAVIGATION TABS -->
-    <div class="grid grid-cols-4 gap-1 bg-maroon-950/90 p-1.5 rounded-2xl border border-gold-500/25">
-      <button onclick="switchTab('payout')" id="tabBtnPayout" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]">
+    <div class="grid grid-cols-4 gap-1 luxury-well p-1.5 rounded-2xl">
+      <button onclick="switchTab('payout')" id="tabBtnPayout" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-stone-900 shadow-sm">
         <i data-lucide="hand-coins" class="w-3.5 h-3.5"></i>
         <span>Modal</span>
       </button>
-      <button onclick="switchTab('input')" id="tabBtnInput" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all">
+      <button onclick="switchTab('input')" id="tabBtnInput" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-stone-600 dark:text-slate-300 hover:text-stone-900 dark:hover:text-gold-300 hover:bg-stone-200/50 dark:hover:bg-maroon-850/60 transition-all">
         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
         <span>Catat (+)</span>
       </button>
-      <button onclick="switchTab('list')" id="tabBtnList" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all">
+      <button onclick="switchTab('list')" id="tabBtnList" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-stone-600 dark:text-slate-300 hover:text-stone-900 dark:hover:text-gold-300 hover:bg-stone-200/50 dark:hover:bg-maroon-850/60 transition-all">
         <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
         <span>Daftar</span>
       </button>
-      <button onclick="switchTab('history')" id="tabBtnHistory" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all">
+      <button onclick="switchTab('history')" id="tabBtnHistory" class="flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-stone-600 dark:text-slate-300 hover:text-stone-900 dark:hover:text-gold-300 hover:bg-stone-200/50 dark:hover:bg-maroon-850/60 transition-all">
         <i data-lucide="archive" class="w-3.5 h-3.5"></i>
         <span>Riwayat</span>
       </button>
@@ -266,18 +355,18 @@
     <!-- VIEW 1: PAPAN AMBIL MODAL (SORE) -->
     <section id="viewPayout" class="space-y-3.5">
       <!-- EXECUTIVE CARD: PENJUALAN EMAS SORE & LABA BERSIH -->
-      <div class="relative overflow-hidden maroon-card p-4 sm:p-5 rounded-2xl border border-gold-500/35 shadow-lg">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-maroon-700/80">
+      <div class="relative overflow-hidden luxury-card p-4 sm:p-5 rounded-2xl shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200 dark:border-maroon-700/80">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center border border-gold-500/30 shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/15 dark:bg-gold-500/20 text-amber-700 dark:text-gold-400 flex items-center justify-center border border-amber-500/30 dark:border-gold-500/30 shrink-0">
               <i data-lucide="coins" class="w-4 h-4"></i>
             </div>
             <div>
-              <h3 class="text-xs sm:text-sm font-bold text-white font-serif tracking-wide">PENJUALAN EMAS SORE &amp; LABA BERSIH</h3>
-              <p class="text-[10px] text-amber-200/60">Hasil penjualan borongan emas dikurangi modal pokok pemodal</p>
+              <h3 class="text-xs sm:text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide">PENJUALAN EMAS SORE &amp; LABA BERSIH</h3>
+              <p class="text-[10px] text-stone-500 dark:text-amber-200/60">Hasil penjualan borongan emas dikurangi modal pokok pemodal</p>
             </div>
           </div>
-          <button type="button" onclick="openSalesModal()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs shadow-md transition-all active:scale-[0.98]">
+          <button type="button" onclick="openSalesModal()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs shadow-sm transition-all active:scale-[0.98]">
             <i data-lucide="edit-3" class="w-3.5 h-3.5 stroke-[2.5]"></i>
             <span id="btnSalesActionText">Input Hasil Jual Sore</span>
           </button>
@@ -286,20 +375,20 @@
         <!-- 3 Metrics Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3">
           <!-- Metric 1: Modal Keluar -->
-          <div class="bg-maroon-950/80 p-3 rounded-xl border border-maroon-800">
-            <div class="text-[10px] font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="arrow-down-left" class="w-3 h-3 text-rose-400"></i>
+          <div class="luxury-well p-3 rounded-xl">
+            <div class="text-[10px] font-mono text-stone-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="arrow-down-left" class="w-3 h-3 text-rose-500 dark:text-rose-400"></i>
               Total Modal Keluar
             </div>
-            <div class="text-base sm:text-lg font-mono font-extrabold text-slate-200 mt-1" id="salesCardCapital">
+            <div class="text-base sm:text-lg font-mono font-extrabold text-stone-900 dark:text-slate-200 mt-1" id="salesCardCapital">
               Rp 0
             </div>
           </div>
 
           <!-- Metric 2: Hasil Jual Sore -->
-          <div class="bg-maroon-950/80 p-3 rounded-xl border border-gold-500/30 cursor-pointer hover:border-gold-400 transition-colors" onclick="openSalesModal()" title="Klik untuk input/ubah hasil penjualan">
-            <div class="text-[10px] font-mono text-gold-400 uppercase tracking-wider flex items-center gap-1">
-              <i data-lucide="arrow-up-right" class="w-3 h-3 text-emerald-400"></i>
+          <div class="luxury-well p-3 rounded-xl cursor-pointer hover:border-amber-400 transition-colors" onclick="openSalesModal()" title="Klik untuk input/ubah hasil penjualan">
+            <div class="text-[10px] font-mono text-amber-700 dark:text-gold-400 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="arrow-up-right" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>
               Hasil Penjualan Emas
             </div>
             <div class="text-base sm:text-lg font-mono font-extrabold gold-metallic-text mt-1" id="salesCardRevenue">
@@ -308,15 +397,15 @@
           </div>
 
           <!-- Metric 3: Keuntungan Bersih -->
-          <div class="bg-gradient-to-br from-maroon-950 via-emerald-950/30 to-maroon-950 p-3 rounded-xl border border-emerald-500/40">
-            <div class="text-[10px] font-mono text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+          <div class="p-3 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/70 dark:from-maroon-950 dark:via-emerald-950/30 dark:to-maroon-950 border border-emerald-300 dark:border-emerald-500/40">
+            <div class="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center justify-between">
               <span class="flex items-center gap-1">
-                <i data-lucide="gem" class="w-3 h-3 text-emerald-400"></i>
+                <i data-lucide="gem" class="w-3 h-3 text-emerald-600 dark:text-emerald-400"></i>
                 Keuntungan Bersih
               </span>
-              <span id="salesProfitBadge" class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">0%</span>
+              <span id="salesProfitBadge" class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-200/80 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40">0%</span>
             </div>
-            <div class="text-base sm:text-lg font-mono font-extrabold text-emerald-400 mt-1" id="salesCardProfit">
+            <div class="text-base sm:text-lg font-mono font-extrabold text-emerald-700 dark:text-emerald-400 mt-1" id="salesCardProfit">
               Rp 0
             </div>
           </div>
@@ -325,106 +414,106 @@
         <!-- CATEGORY BREAKDOWN METRICS (LM vs Non-LM) -->
         <div class="grid grid-cols-2 gap-2 pt-2.5">
           <!-- Box 1: Logam Mulia (LM) -->
-          <div class="bg-maroon-950/90 p-2.5 rounded-xl border border-gold-500/30 space-y-1">
+          <div class="p-2.5 rounded-xl bg-amber-50/70 dark:bg-maroon-950/90 border border-amber-300 dark:border-gold-500/30 space-y-1">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-gold-300 flex items-center gap-1">
+              <span class="text-xs font-bold text-amber-900 dark:text-gold-300 flex items-center gap-1">
                 <span>🪙</span> Logam Mulia (LM)
               </span>
-              <span id="badgeTrxLM" class="text-[9px] font-mono text-amber-200/70 bg-maroon-900 px-1.5 py-0.2 rounded border border-maroon-700">0 trx</span>
+              <span id="badgeTrxLM" class="text-[9px] font-mono text-amber-800 dark:text-amber-200/70 bg-white/80 dark:bg-maroon-900 px-1.5 py-0.5 rounded border border-amber-200 dark:border-maroon-700">0 trx</span>
             </div>
             <div class="flex justify-between items-center text-[11px] font-mono">
-              <span class="text-slate-400">Modal:</span>
-              <span class="font-bold text-slate-200" id="cardCapLM">Rp 0</span>
+              <span class="text-stone-500 dark:text-slate-400">Modal:</span>
+              <span class="font-bold text-stone-900 dark:text-slate-200" id="cardCapLM">Rp 0</span>
             </div>
             <div class="flex justify-between items-center text-[11px] font-mono">
-              <span class="text-gold-400">Jual:</span>
+              <span class="text-amber-700 dark:text-gold-400">Jual:</span>
               <span class="font-bold gold-metallic-text" id="cardRevLM">Rp 0</span>
             </div>
-            <div class="flex justify-between items-center text-[11px] font-mono pt-0.5 border-t border-maroon-800">
-              <span class="text-emerald-400">Laba:</span>
-              <span class="font-extrabold text-emerald-400" id="cardProfLM">Rp 0</span>
+            <div class="flex justify-between items-center text-[11px] font-mono pt-0.5 border-t border-amber-200/60 dark:border-maroon-800">
+              <span class="text-emerald-700 dark:text-emerald-400">Laba:</span>
+              <span class="font-extrabold text-emerald-700 dark:text-emerald-400" id="cardProfLM">Rp 0</span>
             </div>
           </div>
 
           <!-- Box 2: Non-LM (Perhiasan) -->
-          <div class="bg-maroon-950/90 p-2.5 rounded-xl border border-rose-500/30 space-y-1">
+          <div class="p-2.5 rounded-xl bg-rose-50/70 dark:bg-maroon-950/90 border border-rose-300 dark:border-rose-500/30 space-y-1">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-rose-300 flex items-center gap-1">
+              <span class="text-xs font-bold text-rose-900 dark:text-rose-300 flex items-center gap-1">
                 <span>💍</span> Non-LM (Perhiasan)
               </span>
-              <span id="badgeTrxNonLM" class="text-[9px] font-mono text-rose-200/70 bg-maroon-900 px-1.5 py-0.2 rounded border border-maroon-700">0 trx</span>
+              <span id="badgeTrxNonLM" class="text-[9px] font-mono text-rose-800 dark:text-rose-200/70 bg-white/80 dark:bg-maroon-900 px-1.5 py-0.5 rounded border border-rose-200 dark:border-maroon-700">0 trx</span>
             </div>
             <div class="flex justify-between items-center text-[11px] font-mono">
-              <span class="text-slate-400">Modal:</span>
-              <span class="font-bold text-slate-200" id="cardCapNonLM">Rp 0</span>
+              <span class="text-stone-500 dark:text-slate-400">Modal:</span>
+              <span class="font-bold text-stone-900 dark:text-slate-200" id="cardCapNonLM">Rp 0</span>
             </div>
             <div class="flex justify-between items-center text-[11px] font-mono">
-              <span class="text-gold-400">Jual:</span>
+              <span class="text-amber-700 dark:text-gold-400">Jual:</span>
               <span class="font-bold gold-metallic-text" id="cardRevNonLM">Rp 0</span>
             </div>
-            <div class="flex justify-between items-center text-[11px] font-mono pt-0.5 border-t border-maroon-800">
-              <span class="text-emerald-400">Laba:</span>
-              <span class="font-extrabold text-emerald-400" id="cardProfNonLM">Rp 0</span>
+            <div class="flex justify-between items-center text-[11px] font-mono pt-0.5 border-t border-rose-200/60 dark:border-maroon-800">
+              <span class="text-emerald-700 dark:text-emerald-400">Laba:</span>
+              <span class="font-extrabold text-emerald-700 dark:text-emerald-400" id="cardProfNonLM">Rp 0</span>
             </div>
           </div>
         </div>
 
         <!-- INLINE QUICK INPUT FORM ON THE CARD -->
-        <div id="inlineSalesBox" class="mt-3.5 pt-3.5 border-t border-maroon-700/80 bg-maroon-950/90 p-3.5 rounded-xl border border-gold-500/35 space-y-3">
+        <div id="inlineSalesBox" class="mt-3.5 pt-3.5 border-t border-stone-200 dark:border-maroon-700/80 luxury-well p-3.5 rounded-xl space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
-              <i data-lucide="calculator" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span class="text-xs font-bold text-stone-900 dark:text-gold-300 flex items-center gap-1.5">
+              <i data-lucide="calculator" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
               <span>Input Penjualan Emas Sore (LM &amp; Non-LM)</span>
             </span>
-            <span class="text-[10px] font-mono text-amber-200/70" id="inlineSalesCapText">Total Modal: Rp 0</span>
+            <span class="text-[10px] font-mono text-stone-500 dark:text-amber-200/70" id="inlineSalesCapText">Total Modal: Rp 0</span>
           </div>
 
           <!-- Section LM -->
-          <div class="p-2.5 rounded-xl bg-maroon-900/60 border border-gold-500/25 space-y-1.5">
+          <div class="p-2.5 rounded-xl bg-amber-50/60 dark:bg-maroon-900/60 border border-amber-300/60 dark:border-gold-500/25 space-y-1.5">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-gold-300 flex items-center gap-1">🪙 Hasil Jual Logam Mulia (LM):</span>
-              <span class="text-[10px] font-mono text-slate-400" id="inlineCapLMText">Modal: Rp 0</span>
+              <span class="font-bold text-amber-900 dark:text-gold-300 flex items-center gap-1">🪙 Hasil Jual Logam Mulia (LM):</span>
+              <span class="text-[10px] font-mono text-stone-500 dark:text-slate-400" id="inlineCapLMText">Modal: Rp 0</span>
             </div>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-xs text-gold-400">Rp</span>
-              <input type="number" id="inlineInputSalesLM" placeholder="0" oninput="updateInlineSalesCalc()" class="w-full bg-maroon-950 border border-gold-500/40 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-300">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-xs text-amber-700 dark:text-gold-400">Rp</span>
+              <input type="number" id="inlineInputSalesLM" placeholder="0" oninput="updateInlineSalesCalc()" class="w-full bg-white dark:bg-maroon-950 border border-amber-300 dark:border-gold-500/40 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-stone-900 dark:text-white focus:outline-none focus:border-amber-500 dark:focus:border-gold-300">
             </div>
             <div class="flex flex-wrap gap-1">
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+5 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+10 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+25 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+50 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+100 Jt</button>
-              <button type="button" onclick="document.getElementById('inlineInputSalesLM').value=''; updateInlineSalesCalc();" class="px-2 py-0.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-[10px] font-mono text-rose-300">Reset</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+5 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+10 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+25 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+50 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+100 Jt</button>
+              <button type="button" onclick="document.getElementById('inlineInputSalesLM').value=''; updateInlineSalesCalc();" class="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800/60 text-[10px] font-mono text-rose-700 dark:text-rose-300 shadow-xs">Reset</button>
             </div>
           </div>
 
           <!-- Section Non-LM -->
-          <div class="p-2.5 rounded-xl bg-maroon-900/60 border border-rose-500/25 space-y-1.5">
+          <div class="p-2.5 rounded-xl bg-rose-50/60 dark:bg-maroon-900/60 border border-rose-300/60 dark:border-rose-500/25 space-y-1.5">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-rose-300 flex items-center gap-1">💍 Hasil Jual Non-LM (Perhiasan):</span>
-              <span class="text-[10px] font-mono text-slate-400" id="inlineCapNonLMText">Modal: Rp 0</span>
+              <span class="font-bold text-rose-900 dark:text-rose-300 flex items-center gap-1">💍 Hasil Jual Non-LM (Perhiasan):</span>
+              <span class="text-[10px] font-mono text-stone-500 dark:text-slate-400" id="inlineCapNonLMText">Modal: Rp 0</span>
             </div>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-xs text-rose-400">Rp</span>
-              <input type="number" id="inlineInputSalesNonLM" placeholder="0" oninput="updateInlineSalesCalc()" class="w-full bg-maroon-950 border border-rose-500/40 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-rose-300">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-xs text-rose-600 dark:text-rose-400">Rp</span>
+              <input type="number" id="inlineInputSalesNonLM" placeholder="0" oninput="updateInlineSalesCalc()" class="w-full bg-white dark:bg-maroon-950 border border-rose-300 dark:border-rose-500/40 rounded-xl pl-9 pr-3 py-2 text-xs font-mono font-bold text-stone-900 dark:text-white focus:outline-none focus:border-rose-500 dark:focus:border-rose-300">
             </div>
             <div class="flex flex-wrap gap-1">
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+5 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+10 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+25 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+50 Jt</button>
-              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+100 Jt</button>
-              <button type="button" onclick="document.getElementById('inlineInputSalesNonLM').value=''; updateInlineSalesCalc();" class="px-2 py-0.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-[10px] font-mono text-rose-300">Reset</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+5 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+10 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+25 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+50 Jt</button>
+              <button type="button" onclick="addInlineSalesField('inlineInputSalesNonLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-maroon-700 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+100 Jt</button>
+              <button type="button" onclick="document.getElementById('inlineInputSalesNonLM').value=''; updateInlineSalesCalc();" class="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800/60 text-[10px] font-mono text-rose-700 dark:text-rose-300 shadow-xs">Reset</button>
             </div>
           </div>
 
           <!-- Live Breakdown & Simpan Button -->
           <div class="pt-1 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-            <div id="inlineProfitPreview" class="text-xs font-mono font-bold text-emerald-400 w-full sm:w-auto">
+            <div id="inlineProfitPreview" class="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 w-full sm:w-auto">
               Total Laba Bersih: Rp 0 (0%)
             </div>
-            <button type="button" onclick="saveInlineSales()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs shadow-md transition-all active:scale-[0.98] shrink-0 flex items-center justify-center gap-1.5">
+            <button type="button" onclick="saveInlineSales()" class="w-full sm:w-auto px-6 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs shadow-md transition-all active:scale-[0.98] shrink-0 flex items-center justify-center gap-1.5">
               <i data-lucide="check" class="w-3.5 h-3.5 stroke-[2.5]"></i>
               <span>Simpan Penjualan Sore</span>
             </button>
@@ -432,28 +521,28 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between text-xs px-1 text-slate-300">
+      <div class="flex items-center justify-between text-xs px-1 text-stone-600 dark:text-slate-300">
         <span class="flex items-center gap-1.5">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-gold-400"></i>
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
           <span>Tarik tunai uang modal masing-masing di meja kasir:</span>
         </span>
-        <span class="font-mono text-[11px] font-bold text-gold-300 bg-maroon-900 px-2 py-0.5 rounded-full border border-gold-500/30" id="payoutPartnerCountBadge">7 Pemodal Emas</span>
+        <span class="font-mono text-[11px] font-bold text-amber-800 dark:text-gold-300 bg-amber-50 dark:bg-maroon-900 px-2 py-0.5 rounded-full border border-amber-300 dark:border-gold-500/30" id="payoutPartnerCountBadge">7 Pemodal Emas</span>
       </div>
 
       <!-- Payout Cards Container -->
       <div id="payoutCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <!-- Rendered dynamically by app.js -->
-        <div class="text-center py-10 text-slate-400 text-xs">Memuat data papan modal...</div>
+        <div class="text-center py-10 text-stone-400 dark:text-slate-400 text-xs">Memuat data papan modal...</div>
       </div>
 
       <!-- Bottom Action Bar -->
       <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
-        <button onclick="copyWhatsAppRekap()" class="flex-1 py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(16,185,129,0.35)] transition-all active:scale-[0.98]">
+        <button onclick="copyWhatsAppRekap()" class="flex-1 py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]">
           <i data-lucide="copy" class="w-4 h-4"></i>
           <span>Salin Rekap Pengembalian Modal ke WhatsApp</span>
         </button>
-        <button id="mainSessionToggleBtn" onclick="handleMainSessionAction()" class="py-3 px-4 rounded-xl bg-maroon-900 hover:bg-maroon-800 border border-gold-500/30 text-amber-100/80 hover:text-white font-mono text-xs flex items-center justify-center gap-2 transition-all">
-          <i data-lucide="lock" class="w-4 h-4 text-gold-400" id="mainSessionToggleIcon"></i>
+        <button id="mainSessionToggleBtn" onclick="handleMainSessionAction()" class="py-3 px-4 rounded-xl luxury-well hover:border-gold-500/50 text-stone-700 dark:text-amber-100/80 font-mono text-xs flex items-center justify-center gap-2 transition-all">
+          <i data-lucide="lock" class="w-4 h-4 text-amber-600 dark:text-gold-400" id="mainSessionToggleIcon"></i>
           <span id="mainSessionToggleText">Tutup Buku Hari Ini</span>
         </button>
       </div>
@@ -462,37 +551,37 @@
     <!-- VIEW 2: FORM CATAT BELI EMAS (INPUT CEPAT) -->
     <section id="viewInput" class="hidden space-y-4">
       <!-- Warning if Book is Closed -->
-      <div id="closedWarningInForm" class="hidden p-5 rounded-2xl bg-maroon-950 border border-gold-500/40 text-center space-y-3">
-        <div class="inline-flex p-3 rounded-2xl bg-gold-500/15 text-gold-400 border border-gold-500/30 mb-0.5">
+      <div id="closedWarningInForm" class="hidden p-5 rounded-2xl luxury-card text-center space-y-3">
+        <div class="inline-flex p-3 rounded-2xl bg-amber-500/15 text-amber-700 dark:text-gold-400 border border-amber-500/30 mb-0.5">
           <i data-lucide="lock" class="w-6 h-6"></i>
         </div>
-        <h3 class="text-sm font-bold text-white font-serif">BUKU TRANSAKSI SEDANG DITUTUP</h3>
-        <p class="text-xs text-amber-200/70 max-w-md mx-auto">Untuk mencatat transaksi pembelian emas, silakan klik 'Buka Buku' di bawah. Tanggal dan jam buka operasional akan tercatat secara resmi.</p>
+        <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif">BUKU TRANSAKSI SEDANG DITUTUP</h3>
+        <p class="text-xs text-stone-600 dark:text-amber-200/70 max-w-md mx-auto">Untuk mencatat transaksi pembelian emas, silakan klik 'Buka Buku' di bawah. Tanggal dan jam buka operasional akan tercatat secara resmi.</p>
         <div class="pt-1">
-          <button type="button" onclick="promptOpenSession()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs shadow-[0_0_18px_rgba(212,175,55,0.35)] transition-all active:scale-[0.98]">
+          <button type="button" onclick="promptOpenSession()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs shadow-md transition-all active:scale-[0.98]">
             <i data-lucide="book-open" class="w-4 h-4"></i>
             <span>BUKA BUKU TRANSAKSI BARU</span>
           </button>
         </div>
       </div>
 
-      <div id="formCatatBeliContainer" class="maroon-card rounded-2xl border border-gold-500/30 p-5 sm:p-6 space-y-4.5">
+      <div id="formCatatBeliContainer" class="luxury-card rounded-2xl p-5 sm:p-6 space-y-4.5">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2 font-serif tracking-wide">
-            <i data-lucide="plus-circle" class="w-4 h-4 text-gold-400"></i>
+          <h2 class="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2 font-serif tracking-wide">
+            <i data-lucide="plus-circle" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
             <span>CATAT PEMBELIAN EMAS BARU</span>
           </h2>
-          <p class="text-xs text-amber-200/60 mt-0.5">Input nominal keluar modal kasir dan pilih pemodal penyedianya.</p>
+          <p class="text-xs text-stone-500 dark:text-amber-200/60 mt-0.5">Input nominal keluar modal kasir dan pilih pemodal penyedianya.</p>
         </div>
 
         <!-- 0. AI Receipt Scan / Camera Upload (Smart Auto-Fill) -->
-        <div class="relative bg-gradient-to-r from-gold-500/10 via-maroon-800/40 to-transparent rounded-2xl border border-gold-500/35 p-3.5 space-y-2.5">
+        <div class="relative bg-gradient-to-r from-amber-500/10 via-amber-100/30 dark:via-maroon-800/40 to-transparent rounded-2xl border border-amber-400/40 dark:border-gold-500/35 p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-gold-400"></i>
+            <span class="text-xs font-bold text-stone-900 dark:text-gold-300 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
               <span>AI OCR Devera (Pindai Nota / Struk Emas)</span>
             </span>
-            <span id="ocrStatusBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40">Auto-Fill Form</span>
+            <span id="ocrStatusBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-gold-300 border border-amber-500/40">Auto-Fill Form</span>
           </div>
 
           <!-- Hidden File Inputs: Gallery & Camera -->
@@ -500,85 +589,85 @@
           <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptUpload(this)">
 
           <!-- Upload Dropzone / Button Container -->
-          <div id="receiptDropzone" class="border-2 border-dashed border-gold-500/40 hover:border-gold-300 rounded-xl p-3.5 text-center transition-all bg-maroon-950/60 flex flex-col items-center justify-center gap-2.5">
+          <div id="receiptDropzone" class="border-2 border-dashed border-amber-400/60 dark:border-gold-500/40 hover:border-amber-500 rounded-xl p-3.5 text-center transition-all bg-white/70 dark:bg-maroon-950/60 flex flex-col items-center justify-center gap-2.5">
             <div id="receiptPrompt" class="w-full space-y-2.5">
-              <div class="flex items-center gap-3 text-xs font-medium text-slate-300 text-left">
-                <div class="w-9 h-9 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center shrink-0 border border-gold-500/30 shadow-sm">
+              <div class="flex items-center gap-3 text-xs font-medium text-stone-700 dark:text-slate-300 text-left">
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-700 dark:text-gold-400 flex items-center justify-center shrink-0 border border-amber-500/30 shadow-xs">
                   <i data-lucide="receipt" class="w-5 h-5"></i>
                 </div>
                 <div>
-                  <span class="font-bold text-white block">Unggah Bukti Nota Transaksi</span>
-                  <span class="text-[11px] text-amber-200/60 block">AI Devera otomatis mendeteksi nominal &amp; rincian emas</span>
+                  <span class="font-bold text-stone-900 dark:text-white block">Unggah Bukti Nota Transaksi</span>
+                  <span class="text-[11px] text-stone-500 dark:text-amber-200/60 block">AI Devera otomatis mendeteksi nominal &amp; rincian emas</span>
                 </div>
               </div>
 
               <!-- Two Explicit Action Buttons: Galeri HP & Foto Kamera -->
               <div class="grid grid-cols-2 gap-2 pt-1">
-                <button type="button" onclick="document.getElementById('receiptGalleryInput').click()" class="py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/40 text-amber-100 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
-                  <i data-lucide="image" class="w-4 h-4 text-gold-400"></i>
+                <button type="button" onclick="document.getElementById('receiptGalleryInput').click()" class="py-2.5 px-3 rounded-xl bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-gold-500/40 text-stone-800 dark:text-amber-100 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98]">
+                  <i data-lucide="image" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
                   <span>Pilih dari Galeri</span>
                 </button>
-                <button type="button" onclick="document.getElementById('receiptCameraInput').click()" class="py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/40 text-amber-100 hover:text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
-                  <i data-lucide="camera" class="w-4 h-4 text-gold-400"></i>
+                <button type="button" onclick="document.getElementById('receiptCameraInput').click()" class="py-2.5 px-3 rounded-xl bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-750 border border-stone-200 dark:border-gold-500/40 text-stone-800 dark:text-amber-100 font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98]">
+                  <i data-lucide="camera" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
                   <span>Foto Kamera</span>
                 </button>
               </div>
             </div>
 
             <!-- Loading Spinner (Hidden by default) -->
-            <div id="receiptLoading" class="hidden flex items-center gap-2 py-3 text-gold-300 font-mono text-xs">
-              <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i>
+            <div id="receiptLoading" class="hidden flex items-center gap-2 py-3 text-amber-700 dark:text-gold-300 font-mono text-xs">
+              <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-600 dark:text-gold-400"></i>
               <span>Memindai nota struk emas dengan AI Vision...</span>
             </div>
 
             <!-- Preview Card (Hidden by default) -->
-            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between bg-maroon-900 p-2.5 rounded-xl border border-gold-500/40">
+            <div id="receiptPreviewBox" class="hidden w-full flex items-center justify-between luxury-well p-2.5 rounded-xl">
               <div class="flex items-center gap-2.5 overflow-hidden">
-                <img id="receiptThumbnail" src="" class="w-11 h-11 object-cover rounded-lg border border-gold-500/40 shrink-0" alt="Nota">
+                <img id="receiptThumbnail" src="" class="w-11 h-11 object-cover rounded-lg border border-amber-400/50 shrink-0" alt="Nota">
                 <div class="text-left truncate">
-                  <span id="receiptPreviewTitle" class="text-xs font-bold text-white block truncate">Nota Terdeteksi</span>
-                  <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-400 block font-bold">✓ Form terisi otomatis</span>
+                  <span id="receiptPreviewTitle" class="text-xs font-bold text-stone-900 dark:text-white block truncate">Nota Terdeteksi</span>
+                  <span id="receiptPreviewInfo" class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 block font-bold">✓ Form terisi otomatis</span>
                 </div>
               </div>
-              <button type="button" onclick="clearReceiptUpload();" class="text-xs text-rose-300 hover:text-white px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 transition-colors">Hapus</button>
+              <button type="button" onclick="clearReceiptUpload();" class="text-xs text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/20 border border-rose-200 dark:border-rose-500/30 transition-colors">Hapus</button>
             </div>
           </div>
         </div>
 
         <!-- 0.5. Kategori Jenis Emas (Logam Mulia LM vs Non-LM Perhiasan) -->
         <div class="space-y-1.5">
-          <label class="text-xs font-bold text-amber-100 flex items-center justify-between">
+          <label class="text-xs font-bold text-stone-900 dark:text-amber-100 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
-              <i data-lucide="gem" class="w-3.5 h-3.5 text-gold-400"></i>
+              <i data-lucide="gem" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
               <span>Kategori Jenis Emas:</span>
             </span>
-            <span class="text-[10px] text-amber-200/70 font-mono">Pilih Kategori Beli</span>
+            <span class="text-[10px] text-stone-500 dark:text-amber-200/70 font-mono">Pilih Kategori Beli</span>
           </label>
           <div class="grid grid-cols-2 gap-2.5">
             <!-- Option 1: Logam Mulia (LM) -->
-            <button type="button" id="btnCatLM" onclick="setGoldCategory('LM')" class="relative flex items-center gap-2.5 p-3 rounded-xl border border-gold-400 bg-gradient-to-r from-gold-500/25 to-maroon-900 text-left transition-all shadow-md">
-              <div class="w-9 h-9 rounded-lg bg-gold-500/20 text-gold-300 border border-gold-500/40 flex items-center justify-center font-bold text-base shrink-0">
+            <button type="button" id="btnCatLM" onclick="setGoldCategory('LM')" class="relative flex items-center gap-2.5 p-3 rounded-xl border border-amber-400 bg-amber-50/80 dark:border-gold-400 dark:bg-gradient-to-r dark:from-gold-500/25 dark:to-maroon-900 text-left transition-all shadow-xs ring-1 ring-amber-300">
+              <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-800 dark:text-gold-300 border border-amber-500/40 flex items-center justify-center font-bold text-base shrink-0">
                 🪙
               </div>
               <div class="min-w-0 pr-4">
-                <div class="text-xs font-extrabold text-white font-serif tracking-wide truncate">Logam Mulia (LM)</div>
-                <div class="text-[10px] text-amber-200/80 truncate">Antam, UBS, Batangan</div>
+                <div class="text-xs font-extrabold text-stone-900 dark:text-white font-serif tracking-wide truncate">Logam Mulia (LM)</div>
+                <div class="text-[10px] text-amber-800 dark:text-amber-200/80 truncate">Antam, UBS, Batangan</div>
               </div>
-              <div id="checkCatLM" class="absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-gold-400 text-maroon-950 flex items-center justify-center text-[10px] font-extrabold shadow-sm">
+              <div id="checkCatLM" class="absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-amber-500 dark:bg-gold-400 text-white dark:text-maroon-950 flex items-center justify-center text-[10px] font-extrabold shadow-xs">
                 ✓
               </div>
             </button>
 
             <!-- Option 2: Non-LM (Perhiasan) -->
-            <button type="button" id="btnCatNON_LM" onclick="setGoldCategory('NON_LM')" class="relative flex items-center gap-2.5 p-3 rounded-xl border border-maroon-700 bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100">
-              <div class="w-9 h-9 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center justify-center font-bold text-base shrink-0">
+            <button type="button" id="btnCatNON_LM" onclick="setGoldCategory('NON_LM')" class="relative flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 dark:border-maroon-700 bg-[#FAF8F5] dark:bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100">
+              <div class="w-9 h-9 rounded-lg bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/40 flex items-center justify-center font-bold text-base shrink-0">
                 💍
               </div>
               <div class="min-w-0 pr-4">
-                <div class="text-xs font-extrabold text-white font-serif tracking-wide truncate">Non-LM (Perhiasan)</div>
-                <div class="text-[10px] text-slate-400 truncate">Cincin, Gelang, Kalung</div>
+                <div class="text-xs font-extrabold text-stone-900 dark:text-white font-serif tracking-wide truncate">Non-LM (Perhiasan)</div>
+                <div class="text-[10px] text-stone-500 dark:text-slate-400 truncate">Cincin, Gelang, Kalung</div>
               </div>
-              <div id="checkCatNON_LM" class="absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold">
+              <div id="checkCatNON_LM" class="absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-stone-200 dark:bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold">
                 ✓
               </div>
             </button>
@@ -588,53 +677,53 @@
 
         <!-- 1. Nominal Input -->
         <div class="space-y-1.5">
-          <label class="text-xs font-bold text-amber-100 flex items-center gap-1.5">
-            <i data-lucide="coins" class="w-3.5 h-3.5 text-gold-400"></i>
+          <label class="text-xs font-bold text-stone-900 dark:text-amber-100 flex items-center gap-1.5">
+            <i data-lucide="coins" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
             Total Nominal Pembelian (Rp):
           </label>
           <div class="relative">
-            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-extrabold text-gold-400 text-lg">Rp</span>
-            <input type="number" id="inputTotalAmount" placeholder="0" min="0" step="1000" class="w-full bg-maroon-950 border border-maroon-700 focus:border-gold-400 rounded-xl pl-12 pr-4 py-3 text-white font-mono text-xl sm:text-2xl font-extrabold focus:outline-none transition-colors shadow-inner" oninput="handleAmountInput(this.value)">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-extrabold text-amber-600 dark:text-gold-400 text-lg">Rp</span>
+            <input type="number" id="inputTotalAmount" placeholder="0" min="0" step="1000" class="w-full bg-white dark:bg-maroon-950 border border-stone-300 dark:border-maroon-700 focus:border-amber-500 dark:focus:border-gold-400 rounded-xl pl-12 pr-4 py-3 text-stone-900 dark:text-white font-mono text-xl sm:text-2xl font-extrabold focus:outline-none transition-colors shadow-inner" oninput="handleAmountInput(this.value)">
           </div>
           <!-- Quick Rupiah Shortcuts -->
           <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pt-1">
-            <button type="button" onclick="addAmount(5000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+5 Jt</button>
-            <button type="button" onclick="addAmount(10000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+10 Jt</button>
-            <button type="button" onclick="addAmount(25000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+25 Jt</button>
-            <button type="button" onclick="addAmount(50000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+50 Jt</button>
-            <button type="button" onclick="addAmount(100000000)" class="px-2.5 py-1 rounded-lg bg-maroon-850 text-amber-100/90 hover:text-gold-300 hover:border-gold-500/40 text-xs font-mono border border-maroon-700 shrink-0 transition-colors">+100 Jt</button>
-            <button type="button" onclick="clearAmount()" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-mono border border-rose-500/30 shrink-0 transition-colors">Reset</button>
+            <button type="button" onclick="addAmount(5000000)" class="px-2.5 py-1 rounded-lg luxury-well hover:border-amber-400 text-stone-700 dark:text-amber-100/90 text-xs font-mono shrink-0 transition-colors shadow-xs">+5 Jt</button>
+            <button type="button" onclick="addAmount(10000000)" class="px-2.5 py-1 rounded-lg luxury-well hover:border-amber-400 text-stone-700 dark:text-amber-100/90 text-xs font-mono shrink-0 transition-colors shadow-xs">+10 Jt</button>
+            <button type="button" onclick="addAmount(25000000)" class="px-2.5 py-1 rounded-lg luxury-well hover:border-amber-400 text-stone-700 dark:text-amber-100/90 text-xs font-mono shrink-0 transition-colors shadow-xs">+25 Jt</button>
+            <button type="button" onclick="addAmount(50000000)" class="px-2.5 py-1 rounded-lg luxury-well hover:border-amber-400 text-stone-700 dark:text-amber-100/90 text-xs font-mono shrink-0 transition-colors shadow-xs">+50 Jt</button>
+            <button type="button" onclick="addAmount(100000000)" class="px-2.5 py-1 rounded-lg luxury-well hover:border-amber-400 text-stone-700 dark:text-amber-100/90 text-xs font-mono shrink-0 transition-colors shadow-xs">+100 Jt</button>
+            <button type="button" onclick="clearAmount()" class="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/25 text-xs font-mono border border-rose-200 dark:border-rose-500/30 shrink-0 transition-colors shadow-xs">Reset</button>
           </div>
         </div>
 
         <!-- 2. Item Label / Notes -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="space-y-1">
-            <label class="text-xs font-medium text-slate-300">Keterangan / Jenis Barang (Opsional):</label>
-            <input type="text" id="inputItemName" placeholder="Contoh: Kalung 20g 24K / Emas Batangan" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-400 transition-colors">
+            <label class="text-xs font-medium text-stone-700 dark:text-slate-300">Keterangan / Jenis Barang (Opsional):</label>
+            <input type="text" id="inputItemName" placeholder="Contoh: Kalung 20g 24K / Emas Batangan" class="w-full bg-white dark:bg-maroon-950 border border-stone-300 dark:border-maroon-700 rounded-xl px-3.5 py-2.5 text-stone-900 dark:text-white text-xs focus:outline-none focus:border-amber-500 dark:focus:border-gold-400 transition-colors">
           </div>
           <div class="space-y-1">
-            <label class="text-xs font-medium text-slate-300">Catatan Tambahan (Opsional):</label>
-            <input type="text" id="inputNotes" placeholder="Contoh: Beli dari langganan toko" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-3.5 py-2.5 text-white text-xs focus:outline-none focus:border-gold-400 transition-colors">
+            <label class="text-xs font-medium text-stone-700 dark:text-slate-300">Catatan Tambahan (Opsional):</label>
+            <input type="text" id="inputNotes" placeholder="Contoh: Beli dari langganan toko" class="w-full bg-white dark:bg-maroon-950 border border-stone-300 dark:border-maroon-700 rounded-xl px-3.5 py-2.5 text-stone-900 dark:text-white text-xs focus:outline-none focus:border-amber-500 dark:focus:border-gold-400 transition-colors">
           </div>
         </div>
 
         <!-- 3. Funding Mode Switcher -->
-        <div class="pt-2 border-t border-maroon-700/80 space-y-2.5">
+        <div class="pt-2 border-t border-stone-200 dark:border-maroon-700/80 space-y-2.5">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-white flex items-center gap-1.5">
-              <i data-lucide="users" class="w-3.5 h-3.5 text-gold-400"></i>
+            <label class="text-xs font-bold text-stone-900 dark:text-white flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
               Sumber Modal Pembelian:
             </label>
-            <div class="flex items-center bg-maroon-950 p-1 rounded-xl border border-gold-500/25 text-[11px] font-mono">
-              <button type="button" onclick="setFundingMode('solo')" id="btnModeSolo" class="px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm">Solo (1 Orang)</button>
-              <button type="button" onclick="setFundingMode('patungan')" id="btnModePatungan" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all">Patungan (2+ Orang)</button>
+            <div class="flex items-center luxury-well p-1 rounded-xl text-[11px] font-mono">
+              <button type="button" onclick="setFundingMode('solo')" id="btnModeSolo" class="px-3 py-1 rounded-lg gold-gradient-bg text-stone-900 font-bold transition-all shadow-xs">Solo (1 Orang)</button>
+              <button type="button" onclick="setFundingMode('patungan')" id="btnModePatungan" class="px-3 py-1 rounded-lg text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white transition-all">Patungan (2+ Orang)</button>
             </div>
           </div>
 
-          <!-- SOLO MODE: 7 QUICK TAP BUTTONS -->
+          <!-- SOLO MODE: QUICK TAP BUTTONS -->
           <div id="soloModeContainer" class="space-y-2">
-            <p class="text-[11px] text-amber-200/60">Pilih 1 nama pemodal di bawah (100% modal dia):</p>
+            <p class="text-[11px] text-stone-500 dark:text-amber-200/60">Pilih 1 nama pemodal di bawah (100% modal dia):</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="soloPartnerButtons">
               <!-- Rendered dynamically -->
             </div>
@@ -643,8 +732,8 @@
           <!-- PATUNGAN MODE: CHECKBOXES & CUSTOM AMOUNTS -->
           <div id="patunganModeContainer" class="hidden space-y-3 pt-2">
             <div class="flex items-center justify-between">
-              <p class="text-[11px] text-amber-200/60">Pilih pemodal &amp; tentukan nominalnya:</p>
-              <button type="button" onclick="autoSplitEvenly()" class="px-3 py-1.5 rounded-lg bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 border border-gold-500/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all">
+              <p class="text-[11px] text-stone-500 dark:text-amber-200/60">Pilih pemodal &amp; tentukan nominalnya:</p>
+              <button type="button" onclick="autoSplitEvenly()" class="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-gold-500/15 hover:bg-amber-100 text-amber-800 dark:text-gold-300 border border-amber-300 dark:border-gold-500/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs">
                 <i data-lucide="divide" class="w-3 h-3"></i>
                 <span>Bagi Rata</span>
               </button>
@@ -656,15 +745,15 @@
             </div>
 
             <!-- Unallocated balance warning -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-maroon-950 border border-maroon-700 text-xs font-mono">
-              <span class="text-slate-400">Sisa Belum Dialokasikan:</span>
-              <span id="unallocatedDisplay" class="font-bold text-emerald-400">Rp 0 (Pas)</span>
+            <div class="flex items-center justify-between p-3 rounded-xl luxury-well text-xs font-mono">
+              <span class="text-stone-500 dark:text-slate-400">Sisa Belum Dialokasikan:</span>
+              <span id="unallocatedDisplay" class="font-bold text-emerald-600 dark:text-emerald-400">Rp 0 (Pas)</span>
             </div>
           </div>
         </div>
 
         <!-- Submit Button -->
-        <button type="button" onclick="submitTransaction()" id="btnSubmitTrx" class="w-full py-3.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-sm flex items-center justify-center gap-2 shadow-[0_0_22px_rgba(212,175,55,0.4)] active:scale-[0.98] transition-all">
+        <button type="button" onclick="submitTransaction()" id="btnSubmitTrx" class="w-full py-3.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all">
           <i data-lucide="check-circle-2" class="w-5 h-5"></i>
           <span>Simpan Transaksi Pembelian</span>
         </button>
@@ -673,72 +762,72 @@
 
     <!-- VIEW 3: DAFTAR TRANSAKSI HARI INI -->
     <section id="viewList" class="hidden space-y-3">
-      <div class="flex items-center justify-between text-xs px-1 text-slate-300">
+      <div class="flex items-center justify-between text-xs px-1 text-stone-600 dark:text-slate-300">
         <span class="flex items-center gap-1.5">
-          <i data-lucide="history" class="w-3.5 h-3.5 text-gold-400"></i>
+          <i data-lucide="history" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
           <span>Riwayat transaksi pembelian emas hari ini:</span>
         </span>
-        <span class="font-mono text-gold-300 bg-maroon-900 px-2.5 py-0.5 rounded-full border border-gold-500/30" id="txCountBadge">0 Transaksi</span>
+        <span class="font-mono text-amber-800 dark:text-gold-300 bg-amber-50 dark:bg-maroon-900 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-gold-500/30" id="txCountBadge">0 Transaksi</span>
       </div>
 
       <div id="txListContainer" class="space-y-2.5">
         <!-- Rendered dynamically -->
-        <div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian hari ini.</div>
+        <div class="text-center py-10 text-stone-400 dark:text-slate-400 text-xs">Belum ada transaksi pembelian hari ini.</div>
       </div>
     </section>
 
     <!-- VIEW 4: RIWAYAT SESI BUKU (HISTORY ARSIP) -->
     <section id="viewHistory" class="hidden space-y-3.5">
-      <div class="flex items-center justify-between text-xs px-1 text-slate-300">
+      <div class="flex items-center justify-between text-xs px-1 text-stone-600 dark:text-slate-300">
         <span class="flex items-center gap-1.5">
-          <i data-lucide="archive" class="w-3.5 h-3.5 text-gold-400"></i>
+          <i data-lucide="archive" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
           <span>Arsip Riwayat Tutup Buku &amp; Pengembalian Modal:</span>
         </span>
-        <button onclick="loadHistoryData()" class="text-gold-300 hover:text-white flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded-lg bg-maroon-900 border border-gold-500/30">
-          <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+        <button onclick="loadHistoryData()" class="text-amber-800 dark:text-gold-300 hover:text-stone-900 dark:hover:text-white flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded-lg luxury-well">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
           <span>Segarkan</span>
         </button>
       </div>
 
       <div id="historyListContainer" class="space-y-3">
         <!-- Rendered dynamically by app.js -->
-        <div class="text-center py-10 text-slate-400 text-xs">Memuat arsip riwayat...</div>
+        <div class="text-center py-10 text-stone-400 dark:text-slate-400 text-xs">Memuat arsip riwayat...</div>
       </div>
     </section>
 
   </main>
 
   <!-- BOTTOM MOBILE DOCK NAVIGATION -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 maroon-glass border-t border-gold-500/30 px-3 py-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.6)]">
-    <button onclick="switchTab('payout')" class="flex flex-col items-center gap-1 text-[10px] font-bold text-gold-400" id="dockBtnPayout">
+  <nav class="fixed bottom-0 left-0 right-0 z-40 luxury-glass border-t border-gold-500/30 px-3 py-2 flex items-center justify-around md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+    <button onclick="switchTab('payout')" class="flex flex-col items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-gold-400" id="dockBtnPayout">
       <i data-lucide="hand-coins" class="w-4 h-4"></i>
       <span>Modal</span>
     </button>
-    <button onclick="switchTab('input')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white" id="dockBtnInput">
-      <div class="w-8 h-8 rounded-full gold-gradient-bg text-maroon-950 flex items-center justify-center -mt-3 shadow-[0_0_15px_rgba(212,175,55,0.45)] ring-2 ring-maroon-950">
+    <button onclick="switchTab('input')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white" id="dockBtnInput">
+      <div class="w-8 h-8 rounded-full gold-gradient-bg text-stone-900 flex items-center justify-center -mt-3 shadow-md ring-2 ring-white dark:ring-maroon-950">
         <i data-lucide="plus" class="w-4 h-4 stroke-[2.5]"></i>
       </div>
       <span>Catat</span>
     </button>
-    <button onclick="switchTab('list')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white" id="dockBtnList">
+    <button onclick="switchTab('list')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white" id="dockBtnList">
       <i data-lucide="receipt" class="w-4 h-4"></i>
       <span>Daftar</span>
     </button>
-    <button onclick="switchTab('history')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white" id="dockBtnHistory">
+    <button onclick="switchTab('history')" class="flex flex-col items-center gap-1 text-[10px] font-semibold text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white" id="dockBtnHistory">
       <i data-lucide="archive" class="w-4 h-4"></i>
       <span>Riwayat</span>
     </button>
   </nav>
 
   <!-- MODAL: HISTORY SESSION DETAIL -->
-  <div id="modalHistoryDetail" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden">
-    <div class="maroon-card w-full max-w-xl rounded-2xl border border-gold-500/40 p-4 sm:p-5 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-maroon-700">
+  <div id="modalHistoryDetail" class="fixed inset-0 z-50 bg-black/60 dark:bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="luxury-card w-full max-w-xl rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-maroon-700">
         <div>
-          <h3 class="text-sm font-bold text-white font-serif tracking-wide" id="historyModalTitle">Rincian Riwayat Sesi</h3>
-          <span class="text-[10px] font-mono text-emerald-400" id="historyModalStatus">BUKU DITUTUP</span>
+          <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide" id="historyModalTitle">Rincian Riwayat Sesi</h3>
+          <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400" id="historyModalStatus">BUKU DITUTUP</span>
         </div>
-        <button onclick="closeHistoryDetailModal()" class="text-slate-400 hover:text-white p-1">
+        <button onclick="closeHistoryDetailModal()" class="text-stone-400 hover:text-stone-900 dark:hover:text-white p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -747,113 +836,113 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="pt-3 border-t border-maroon-700 flex items-center justify-between gap-2">
+      <div class="pt-3 border-t border-stone-200 dark:border-maroon-700 flex items-center justify-between gap-2">
         <button onclick="copySpecificHistoryWA()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
           <span>Salin Rekap WA</span>
         </button>
-        <button onclick="closeHistoryDetailModal()" class="px-4 py-2 rounded-xl bg-maroon-850 text-slate-300 hover:text-white text-xs font-semibold border border-maroon-700">Tutup</button>
+        <button onclick="closeHistoryDetailModal()" class="px-4 py-2 rounded-xl luxury-well text-stone-700 dark:text-slate-300 text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL: INPUT / EDIT HASIL PENJUALAN SORE -->
-  <div id="modalSales" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="maroon-card w-full max-w-lg rounded-2xl border border-gold-500/40 p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-maroon-700">
+  <div id="modalSales" class="fixed inset-0 z-50 bg-black/60 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="luxury-card w-full max-w-lg rounded-2xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-maroon-700">
         <div class="flex items-center gap-2">
-          <i data-lucide="circle-dollar-sign" class="w-5 h-5 text-gold-400"></i>
+          <i data-lucide="circle-dollar-sign" class="w-5 h-5 text-amber-600 dark:text-gold-400"></i>
           <div>
-            <h3 class="text-sm font-bold text-white font-serif tracking-wide">INPUT HASIL PENJUALAN SORE</h3>
-            <p class="text-[10px] text-amber-200/60">Rincian penjualan borongan Logam Mulia (LM) &amp; Non-LM (Perhiasan)</p>
+            <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide">INPUT HASIL PENJUALAN SORE</h3>
+            <p class="text-[10px] text-stone-500 dark:text-amber-200/60">Rincian penjualan borongan Logam Mulia (LM) &amp; Non-LM (Perhiasan)</p>
           </div>
         </div>
-        <button onclick="closeSalesModal()" class="text-slate-400 hover:text-white p-1">
+        <button onclick="closeSalesModal()" class="text-stone-400 hover:text-stone-900 dark:hover:text-white p-1">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
       <div class="space-y-3.5">
         <!-- 1. Input Hasil Jual LM -->
-        <div class="p-3 rounded-xl bg-maroon-950 border border-gold-500/30 space-y-2">
+        <div class="p-3 rounded-xl bg-amber-50/60 dark:bg-maroon-950 border border-amber-300/60 dark:border-gold-500/30 space-y-2">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-gold-300 flex items-center gap-1.5">
+            <span class="font-bold text-amber-900 dark:text-gold-300 flex items-center gap-1.5">
               <span>🪙</span>
               <span>Hasil Penjualan Logam Mulia (LM)</span>
             </span>
-            <span class="text-[10px] font-mono text-slate-400" id="modalTargetCapLM">Modal: Rp 0</span>
+            <span class="text-[10px] font-mono text-stone-500 dark:text-slate-400" id="modalTargetCapLM">Modal: Rp 0</span>
           </div>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gold-400 font-bold font-mono text-sm">Rp</span>
-            <input type="number" id="modalSalesLM" placeholder="0" oninput="updateSalesCalculationPreview()" class="w-full bg-maroon-900 border border-gold-500/40 focus:border-gold-300 rounded-xl pl-11 pr-3 py-2.5 text-sm font-mono font-extrabold text-white focus:outline-none shadow-inner">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-700 dark:text-gold-400 font-bold font-mono text-sm">Rp</span>
+            <input type="number" id="modalSalesLM" placeholder="0" oninput="updateSalesCalculationPreview()" class="w-full bg-white dark:bg-maroon-900 border border-amber-300 dark:border-gold-500/40 focus:border-amber-500 dark:focus:border-gold-300 rounded-xl pl-11 pr-3 py-2.5 text-sm font-mono font-extrabold text-stone-900 dark:text-white focus:outline-none shadow-inner">
           </div>
           <div class="flex flex-wrap gap-1">
-            <button type="button" onclick="addModalSalesField('modalSalesLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+5 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+10 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+25 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+50 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+100 Jt</button>
-            <button type="button" onclick="document.getElementById('modalSalesLM').value=''; updateSalesCalculationPreview();" class="px-2 py-0.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-[10px] font-mono text-rose-300">Reset</button>
+            <button type="button" onclick="addModalSalesField('modalSalesLM', 5000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+5 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesLM', 10000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+10 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesLM', 25000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+25 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesLM', 50000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+50 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesLM', 100000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+100 Jt</button>
+            <button type="button" onclick="document.getElementById('modalSalesLM').value=''; updateSalesCalculationPreview();" class="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800/60 text-[10px] font-mono text-rose-700 dark:text-rose-300 shadow-xs">Reset</button>
           </div>
-          <div class="text-[11px] font-mono text-emerald-400 font-bold" id="previewProfitLM">Laba LM: Rp 0 (0%)</div>
+          <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold" id="previewProfitLM">Laba LM: Rp 0 (0%)</div>
         </div>
 
         <!-- 2. Input Hasil Jual Non-LM -->
-        <div class="p-3 rounded-xl bg-maroon-950 border border-rose-500/30 space-y-2">
+        <div class="p-3 rounded-xl bg-rose-50/60 dark:bg-maroon-950 border border-rose-300/60 dark:border-rose-500/30 space-y-2">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-rose-300 flex items-center gap-1.5">
+            <span class="font-bold text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
               <span>💍</span>
               <span>Hasil Penjualan Non-LM (Perhiasan)</span>
             </span>
-            <span class="text-[10px] font-mono text-slate-400" id="modalTargetCapNonLM">Modal: Rp 0</span>
+            <span class="text-[10px] font-mono text-stone-500 dark:text-slate-400" id="modalTargetCapNonLM">Modal: Rp 0</span>
           </div>
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400 font-bold font-mono text-sm">Rp</span>
-            <input type="number" id="modalSalesNonLM" placeholder="0" oninput="updateSalesCalculationPreview()" class="w-full bg-maroon-900 border border-rose-500/40 focus:border-rose-300 rounded-xl pl-11 pr-3 py-2.5 text-sm font-mono font-extrabold text-white focus:outline-none shadow-inner">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-rose-600 dark:text-rose-400 font-bold font-mono text-sm">Rp</span>
+            <input type="number" id="modalSalesNonLM" placeholder="0" oninput="updateSalesCalculationPreview()" class="w-full bg-white dark:bg-maroon-900 border border-rose-300 dark:border-rose-500/40 focus:border-rose-500 dark:focus:border-rose-300 rounded-xl pl-11 pr-3 py-2.5 text-sm font-mono font-extrabold text-stone-900 dark:text-white focus:outline-none shadow-inner">
           </div>
           <div class="flex flex-wrap gap-1">
-            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 5000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+5 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 10000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+10 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 25000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+25 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 50000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+50 Jt</button>
-            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 100000000)" class="px-2 py-0.5 rounded-lg bg-maroon-850 hover:bg-maroon-750 border border-maroon-700 text-[10px] font-mono text-slate-300">+100 Jt</button>
-            <button type="button" onclick="document.getElementById('modalSalesNonLM').value=''; updateSalesCalculationPreview();" class="px-2 py-0.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-[10px] font-mono text-rose-300">Reset</button>
+            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 5000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+5 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 10000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+10 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 25000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+25 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 50000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+50 Jt</button>
+            <button type="button" onclick="addModalSalesField('modalSalesNonLM', 100000000)" class="px-2 py-0.5 rounded-lg luxury-well hover:border-amber-400 text-[10px] font-mono text-stone-700 dark:text-slate-300 shadow-xs">+100 Jt</button>
+            <button type="button" onclick="document.getElementById('modalSalesNonLM').value=''; updateSalesCalculationPreview();" class="px-2 py-0.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800/60 text-[10px] font-mono text-rose-700 dark:text-rose-300 shadow-xs">Reset</button>
           </div>
-          <div class="text-[11px] font-mono text-emerald-400 font-bold" id="previewProfitNonLM">Laba Non-LM: Rp 0 (0%)</div>
+          <div class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold" id="previewProfitNonLM">Laba Non-LM: Rp 0 (0%)</div>
         </div>
 
         <!-- 3. Catatan Opsional -->
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Catatan Penjualan (Opsional)</label>
-          <input type="text" id="inputSalesNotes" placeholder="Misal: Jual LM ke Toko Antam, Perhiasan ke Pasar Sentral" class="w-full bg-maroon-950 border border-maroon-700 focus:border-gold-400 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+          <label class="block text-xs font-semibold text-stone-700 dark:text-slate-300 mb-1">Catatan Penjualan (Opsional)</label>
+          <input type="text" id="inputSalesNotes" placeholder="Misal: Jual LM ke Toko Antam, Perhiasan ke Pasar Sentral" class="w-full bg-white dark:bg-maroon-950 border border-stone-300 dark:border-maroon-700 focus:border-amber-500 dark:focus:border-gold-400 rounded-xl px-3 py-2 text-xs text-stone-900 dark:text-white focus:outline-none">
         </div>
 
         <!-- 4. Total Consolidation Box -->
-        <div class="p-3.5 rounded-xl bg-gradient-to-r from-maroon-950 via-emerald-950/40 to-maroon-950 border border-emerald-500/50 space-y-2">
+        <div class="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-white to-emerald-50 dark:from-maroon-950 dark:via-emerald-950/40 dark:to-maroon-950 border border-emerald-300 dark:border-emerald-500/50 space-y-2">
           <div class="flex justify-between items-center text-xs">
-            <span class="text-slate-400 font-mono">Total Modal Keluar:</span>
-            <span class="font-mono font-bold text-slate-300" id="modalInputTargetCapital">Rp 0</span>
+            <span class="text-stone-500 dark:text-slate-400 font-mono">Total Modal Keluar:</span>
+            <span class="font-mono font-bold text-stone-900 dark:text-slate-300" id="modalInputTargetCapital">Rp 0</span>
           </div>
           <div class="flex justify-between items-center text-xs">
-            <span class="text-gold-400 font-mono">Total Hasil Jual (LM + Non-LM):</span>
+            <span class="text-amber-800 dark:text-gold-400 font-mono">Total Hasil Jual (LM + Non-LM):</span>
             <span class="font-mono font-extrabold gold-metallic-text" id="formattedSalesPreview">Rp 0</span>
           </div>
-          <div class="flex justify-between items-center pt-1.5 border-t border-maroon-800">
-            <span class="text-xs font-bold text-white flex items-center gap-1">
-              <i data-lucide="gem" class="w-4 h-4 text-emerald-400"></i>
+          <div class="flex justify-between items-center pt-1.5 border-t border-emerald-200 dark:border-maroon-800">
+            <span class="text-xs font-bold text-stone-900 dark:text-white flex items-center gap-1">
+              <i data-lucide="gem" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
               TOTAL LABA BERSIH:
             </span>
             <div class="text-right">
-              <div class="text-base font-mono font-extrabold text-emerald-400" id="salesModalProfitResult">Rp 0</div>
-              <div class="text-[10px] font-mono text-emerald-300" id="salesModalProfitPct">(0%)</div>
+              <div class="text-base font-mono font-extrabold text-emerald-700 dark:text-emerald-400" id="salesModalProfitResult">Rp 0</div>
+              <div class="text-[10px] font-mono text-emerald-600 dark:text-emerald-300" id="salesModalProfitPct">(0%)</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="pt-3 border-t border-maroon-700 flex justify-end gap-2">
-        <button type="button" onclick="closeSalesModal()" class="px-4 py-2.5 rounded-xl bg-maroon-850 text-slate-300 hover:text-white text-xs font-semibold border border-maroon-700">Batal</button>
-        <button type="button" onclick="saveSalesRevenue()" class="px-5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 text-xs font-bold shadow-[0_0_15px_rgba(212,175,55,0.35)] active:scale-[0.98] transition-all flex items-center gap-1.5">
+      <div class="pt-3 border-t border-stone-200 dark:border-maroon-700 flex justify-end gap-2">
+        <button type="button" onclick="closeSalesModal()" class="px-4 py-2.5 rounded-xl luxury-well text-stone-700 dark:text-slate-300 text-xs font-semibold">Batal</button>
+        <button type="button" onclick="saveSalesRevenue()" class="px-5 py-2.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 text-xs font-bold shadow-md active:scale-[0.98] transition-all flex items-center gap-1.5">
           <i data-lucide="save" class="w-4 h-4"></i>
           <span>Simpan Hasil Jual</span>
         </button>
@@ -862,79 +951,80 @@
   </div>
 
   <!-- MODAL: SETTINGS (PARTNER MANAGEMENT & TAMBAH ANGGOTA) -->
-  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="maroon-card w-full max-w-md rounded-2xl border border-gold-500/40 p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 border-b border-maroon-700">
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-black/60 dark:bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="luxury-card w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-maroon-700">
         <div class="flex items-center gap-2">
-          <i data-lucide="users" class="w-4 h-4 text-gold-400"></i>
-          <h3 class="text-sm font-bold text-white font-serif tracking-wide" id="modalSettingsTitle">PENGATURAN PEMODAL EMAS</h3>
+          <i data-lucide="users" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
+          <h3 class="text-sm font-bold text-stone-900 dark:text-white font-serif tracking-wide" id="modalSettingsTitle">PENGATURAN PEMODAL EMAS</h3>
         </div>
-        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1">
+        <button onclick="closeSettingsModal()" class="text-stone-400 hover:text-stone-900 dark:hover:text-white p-1">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
       <!-- Section: Form Tambah Pemodal Baru -->
-      <div class="bg-maroon-950/90 p-3.5 rounded-2xl border border-gold-500/35 space-y-2.5 shadow-sm">
+      <div class="luxury-well p-3.5 rounded-2xl space-y-2.5 shadow-xs">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5 text-gold-400"></i>
+          <span class="text-xs font-bold text-stone-900 dark:text-gold-300 flex items-center gap-1.5">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
             <span>Tambah Anggota Pemodal Baru</span>
           </span>
-          <span class="text-[10px] font-mono text-amber-200/60">Otomatis Masuk Kasir</span>
+          <span class="text-[10px] font-mono text-stone-500 dark:text-amber-200/60">Otomatis Masuk Kasir</span>
         </div>
         <div class="flex gap-2">
-          <input type="text" id="newPartnerName" placeholder="Nama Pemodal (misal: Mas Dani)" class="flex-1 bg-maroon-900 border border-maroon-700 focus:border-gold-400 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-bold">
-          <button type="button" onclick="addNewPartner()" class="py-2 px-3.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 text-xs font-extrabold shadow-md flex items-center justify-center gap-1 transition-all active:scale-[0.98] shrink-0">
+          <input type="text" id="newPartnerName" placeholder="Nama Pemodal (misal: Mas Dani)" class="flex-1 bg-white dark:bg-maroon-900 border border-stone-300 dark:border-maroon-700 focus:border-amber-500 dark:focus:border-gold-400 rounded-xl px-3 py-2 text-xs text-stone-900 dark:text-white focus:outline-none font-bold">
+          <button type="button" onclick="addNewPartner()" class="py-2 px-3.5 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 text-xs font-extrabold shadow-sm flex items-center justify-center gap-1 transition-all active:scale-[0.98] shrink-0">
             <i data-lucide="plus" class="w-3.5 h-3.5 stroke-[2.5]"></i>
             <span>Tambah</span>
           </button>
         </div>
       </div>
 
-      <div class="flex items-center justify-between text-xs px-0.5 text-slate-300">
+      <div class="flex items-center justify-between text-xs px-0.5 text-stone-600 dark:text-slate-300">
         <span>Daftar Pemodal Aktif:</span>
-        <span class="font-mono text-[11px] text-amber-200/70" id="settingsPartnerCountText">7 Pemodal</span>
+        <span class="font-mono text-[11px] text-amber-800 dark:text-amber-200/70" id="settingsPartnerCountText">7 Pemodal</span>
       </div>
 
       <div class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1" id="settingsPartnersList">
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="pt-3 border-t border-maroon-700 flex justify-end gap-2">
-        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-maroon-850 text-slate-300 hover:text-white text-xs font-semibold border border-maroon-700">Tutup</button>
-        <button onclick="saveAllPartnerSettings()" class="px-4 py-2 rounded-xl gold-gradient-bg text-maroon-950 text-xs font-bold shadow-[0_0_12px_rgba(212,175,55,0.3)]">Simpan Nama</button>
+      <div class="pt-3 border-t border-stone-200 dark:border-maroon-700 flex justify-end gap-2">
+        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl luxury-well text-stone-700 dark:text-slate-300 text-xs font-semibold">Tutup</button>
+        <button onclick="saveAllPartnerSettings()" class="px-4 py-2 rounded-xl gold-gradient-bg text-stone-900 text-xs font-bold shadow-md">Simpan Nama</button>
       </div>
     </div>
   </div>
 
   <!-- RECEIPT LIGHTBOX MODAL -->
-  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="maroon-card border border-gold-500/40 rounded-2xl max-w-lg w-full p-4 space-y-3 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b border-maroon-700">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="receipt" class="w-4 h-4 text-gold-400"></i>
+  <div id="receiptModal" class="hidden fixed inset-0 z-50 bg-black/80 dark:bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="luxury-card rounded-2xl max-w-lg w-full p-4 space-y-3 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-200 dark:border-maroon-700">
+        <h3 class="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
+          <i data-lucide="receipt" class="w-4 h-4 text-amber-600 dark:text-gold-400"></i>
           <span>Foto Bukti Transaksi Emas</span>
         </h3>
-        <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-white p-1">
+        <button onclick="closeReceiptModal()" class="text-stone-400 hover:text-stone-900 dark:hover:text-white p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <div class="flex-1 overflow-auto flex items-center justify-center bg-black/50 rounded-xl p-1 border border-maroon-800">
+      <div class="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-black/50 rounded-xl p-1 border border-stone-200 dark:border-maroon-800">
         <img id="receiptModalImg" src="" alt="Bukti Transaksi" class="max-h-[65vh] w-auto object-contain rounded-lg">
       </div>
       <div class="flex justify-end pt-1">
-        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl bg-maroon-850 border border-maroon-700 text-slate-300 text-xs font-semibold">Tutup</button>
+        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl luxury-well text-stone-700 dark:text-slate-300 text-xs font-semibold">Tutup</button>
       </div>
     </div>
   </div>
 
   <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-maroon-850 border border-gold-500/50 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
-    <i data-lucide="check" class="w-4 h-4 text-gold-400" id="toastIcon"></i>
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-stone-900 dark:bg-maroon-850 border border-amber-400/60 dark:border-gold-500/50 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-none transition-all duration-300 opacity-0 translate-y-3">
+    <i data-lucide="check" class="w-4 h-4 text-amber-400 dark:text-gold-400" id="toastIcon"></i>
     <span id="toastMsg">Pesan Notifikasi</span>
   </div>
 
-  <script src="/static/app.js?v=20261002_03"></script>
+  <!-- Main Application Script with Cache Busting Version -->
+  <script src="/static/app.js?v=20261003_01"></script>
 </body>
 </html>
