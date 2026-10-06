@@ -21,6 +21,61 @@ let state = {
   selectedGoldCategory: "LM",
 };
 
+// ==================== THEME MANAGEMENT (LIGHT LUXURY DEFAULT) ====================
+function initTheme() {
+  const saved = localStorage.getItem("npp_theme") || "light";
+  if (saved === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+  updateThemeButtonUI();
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle("dark");
+  const theme = isDark ? "dark" : "light";
+  localStorage.setItem("npp_theme", theme);
+  updateThemeButtonUI();
+  
+  // Re-render UI components to sync dynamic theme styling
+  if (state.dailyBoard) {
+    renderDailyBoard();
+  }
+  if (state.partners && state.partners.length > 0) {
+    renderSoloButtons();
+    if (state.fundingMode === "patungan") renderPatunganRows();
+  }
+  if (state.transactions) {
+    renderTransactionsList();
+  }
+  if (state.historyList) {
+    renderHistoryList();
+  }
+}
+
+function updateThemeButtonUI() {
+  const isDark = document.documentElement.classList.contains("dark");
+  const btnText = document.getElementById("themeToggleText");
+  const sunIcon = document.getElementById("themeSunIcon");
+  const moonIcon = document.getElementById("themeMoonIcon");
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+  if (isDark) {
+    if (btnText) btnText.textContent = "Gelap";
+    if (sunIcon) sunIcon.classList.add("hidden");
+    if (moonIcon) moonIcon.classList.remove("hidden");
+    if (metaTheme) metaTheme.setAttribute("content", "#0A0204");
+  } else {
+    if (btnText) btnText.textContent = "Terang";
+    if (sunIcon) sunIcon.classList.remove("hidden");
+    if (moonIcon) moonIcon.classList.add("hidden");
+    if (metaTheme) metaTheme.setAttribute("content", "#F8F6F0");
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+// ==================== GOLD CATEGORY (LM VS NON-LM) ====================
 function setGoldCategory(cat) {
   state.selectedGoldCategory = cat === "NON_LM" ? "NON_LM" : "LM";
   const btnLM = document.getElementById("btnCatLM");
@@ -33,32 +88,32 @@ function setGoldCategory(cat) {
 
   if (state.selectedGoldCategory === "LM") {
     if (btnLM) {
-      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-gold-400 bg-gradient-to-r from-gold-500/25 to-maroon-900 text-left transition-all shadow-md";
+      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-amber-400 bg-amber-50/80 dark:border-gold-400 dark:bg-gradient-to-r dark:from-gold-500/25 dark:to-maroon-900 text-left transition-all shadow-xs ring-1 ring-amber-300";
     }
     if (checkLM) {
-      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-gold-400 text-maroon-950 flex items-center justify-center text-[10px] font-extrabold shadow-sm";
+      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-amber-500 dark:bg-gold-400 text-white dark:text-maroon-950 flex items-center justify-center text-[10px] font-extrabold shadow-xs";
       checkLM.textContent = "✓";
     }
     if (btnNonLM) {
-      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-maroon-700 bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
+      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 dark:border-maroon-700 bg-[#FAF8F5] dark:bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
     }
     if (checkNonLM) {
-      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
+      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-stone-200 dark:bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
       checkNonLM.textContent = "✓";
     }
   } else {
     if (btnLM) {
-      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-maroon-700 bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
+      btnLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 dark:border-maroon-700 bg-[#FAF8F5] dark:bg-maroon-950/80 text-left transition-all opacity-70 hover:opacity-100";
     }
     if (checkLM) {
-      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
+      checkLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-stone-200 dark:bg-maroon-800 text-transparent flex items-center justify-center text-[10px] font-extrabold";
       checkLM.textContent = "✓";
     }
     if (btnNonLM) {
-      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-rose-400 bg-gradient-to-r from-rose-500/25 to-maroon-900 text-left transition-all shadow-md";
+      btnNonLM.className = "relative flex items-center gap-2.5 p-3 rounded-xl border border-rose-400 bg-rose-50/80 dark:border-rose-400 dark:bg-gradient-to-r dark:from-rose-500/25 dark:to-maroon-900 text-left transition-all shadow-xs ring-1 ring-rose-300";
     }
     if (checkNonLM) {
-      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-rose-400 text-white flex items-center justify-center text-[10px] font-extrabold shadow-sm";
+      checkNonLM.className = "absolute right-2.5 top-2.5 w-4 h-4 rounded-full bg-rose-500 dark:bg-rose-400 text-white flex items-center justify-center text-[10px] font-extrabold shadow-xs";
       checkNonLM.textContent = "✓";
     }
   }
@@ -78,7 +133,7 @@ function showToast(message, isSuccess = true) {
   msgEl.textContent = message;
   if (iconEl) {
     iconEl.setAttribute("data-lucide", isSuccess ? "check-circle" : "alert-circle");
-    iconEl.className = isSuccess ? "w-4 h-4 text-gold-400" : "w-4 h-4 text-rose-400";
+    iconEl.className = isSuccess ? "w-4 h-4 text-amber-500 dark:text-gold-400" : "w-4 h-4 text-rose-500";
     if (window.lucide) lucide.createIcons();
   }
 
@@ -119,9 +174,9 @@ function switchTab(tab) {
     const btn = tabBtns[k];
     if (btn) {
       if (k === tab) {
-        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-maroon-950 shadow-[0_0_15px_rgba(212,175,55,0.35)]";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold transition-all gold-gradient-bg text-stone-900 shadow-sm";
       } else {
-        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-slate-300 hover:text-gold-300 hover:bg-maroon-850/60 transition-all";
+        btn.className = "flex items-center justify-center gap-1.5 py-2.5 px-1 sm:px-3 rounded-xl text-xs font-bold text-stone-600 dark:text-slate-300 hover:text-stone-900 dark:hover:text-gold-300 hover:bg-stone-200/50 dark:hover:bg-maroon-850/60 transition-all";
       }
     }
   });
@@ -137,8 +192,8 @@ function switchTab(tab) {
     const btn = dockBtns[k];
     if (btn && k !== "input") {
       btn.className = k === tab 
-        ? "flex flex-col items-center gap-1 text-[10px] font-bold text-gold-400"
-        : "flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white";
+        ? "flex flex-col items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-gold-400"
+        : "flex flex-col items-center gap-1 text-[10px] font-semibold text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white";
     }
   });
 
@@ -160,7 +215,6 @@ async function loadAllData(silent = false) {
     const pData = await pRes.json();
     if (pData.success) {
       state.partners = pData.data;
-      // Only re-render inputs if user is not actively typing in them
       const isInputActive = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
       if (!isInputActive || state.currentTab !== "input") {
         renderSoloButtons();
@@ -198,9 +252,9 @@ function refreshData() {
 
 // Background Live Sync (Keeps all 7-10 partners in sync every 7 seconds)
 setInterval(() => {
-  if (document.hidden) return; // Save battery if phone screen is locked or browser in background
+  if (document.hidden) return;
   const isTyping = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
-  if (isTyping && state.currentTab === "input") return; // Don't interrupt cashier typing
+  if (isTyping && state.currentTab === "input") return;
   loadAllData(true);
 }, 7000);
 
@@ -227,7 +281,7 @@ function renderDailyBoard() {
     if (isClosed) {
       dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
     } else {
-      dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse";
+      dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse";
     }
   }
 
@@ -235,10 +289,10 @@ function renderDailyBoard() {
   if (badge) {
     if (isClosed) {
       badge.textContent = "BUKU DITUTUP";
-      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40";
+      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40";
     } else {
       badge.textContent = "SESI AKTIF";
-      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35";
+      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35";
     }
   }
 
@@ -271,11 +325,11 @@ function renderDailyBoard() {
   const toggleIcon = document.getElementById("mainSessionToggleIcon");
   if (toggleBtn && toggleText) {
     if (isClosed) {
-      toggleBtn.className = "py-3.5 px-4 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(212,175,55,0.35)] transition-all active:scale-[0.98]";
+      toggleBtn.className = "py-3.5 px-4 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]";
       toggleText.textContent = "Buka Buku Baru";
       if (toggleIcon) toggleIcon.setAttribute("data-lucide", "book-open");
     } else {
-      toggleBtn.className = "py-3 px-4 rounded-xl bg-maroon-900 hover:bg-maroon-800 border border-gold-500/30 text-amber-100/80 hover:text-white font-mono text-xs flex items-center justify-center gap-2 transition-all";
+      toggleBtn.className = "py-3 px-4 rounded-xl luxury-well hover:border-gold-500/50 text-stone-700 dark:text-amber-100/80 font-mono text-xs flex items-center justify-center gap-2 transition-all";
       toggleText.textContent = "Tutup Buku Hari Ini";
       if (toggleIcon) toggleIcon.setAttribute("data-lucide", "lock");
     }
@@ -311,25 +365,25 @@ function renderDailyBoard() {
     if (salesProfEl) {
       salesProfEl.textContent = `${profitSign}${formatRupiah(board.net_profit)}`;
       salesProfEl.className = board.net_profit >= 0 
-        ? "text-base sm:text-lg font-mono font-extrabold text-emerald-400 mt-1" 
-        : "text-base sm:text-lg font-mono font-extrabold text-rose-400 mt-1";
+        ? "text-base sm:text-lg font-mono font-extrabold text-emerald-700 dark:text-emerald-400 mt-1" 
+        : "text-base sm:text-lg font-mono font-extrabold text-rose-600 dark:text-rose-400 mt-1";
     }
     if (salesBadgeEl) {
       salesBadgeEl.textContent = `${profitSign}${board.profit_percentage}%`;
       salesBadgeEl.className = board.net_profit >= 0
-        ? "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-        : "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40";
+        ? "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-200/80 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40"
+        : "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-200/80 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40";
     }
   } else {
-    if (salesRevEl) salesRevEl.innerHTML = `<span class="text-slate-500 italic text-xs font-normal">Belum diinput</span>`;
+    if (salesRevEl) salesRevEl.innerHTML = `<span class="text-stone-400 dark:text-slate-500 italic text-xs font-normal">Belum diinput</span>`;
     if (btnSalesTxt) btnSalesTxt.textContent = "Input Hasil Jual Sore";
     if (salesProfEl) {
-      salesProfEl.innerHTML = `<span class="text-slate-500 italic text-xs font-normal">Menunggu Penjualan Sore</span>`;
-      salesProfEl.className = "text-base sm:text-lg font-mono font-extrabold text-slate-400 mt-1";
+      salesProfEl.innerHTML = `<span class="text-stone-400 dark:text-slate-500 italic text-xs font-normal">Menunggu Penjualan Sore</span>`;
+      salesProfEl.className = "text-base sm:text-lg font-mono font-extrabold text-stone-500 dark:text-slate-400 mt-1";
     }
     if (salesBadgeEl) {
       salesBadgeEl.textContent = "0%";
-      salesBadgeEl.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-maroon-900 text-slate-400 border border-maroon-750";
+      salesBadgeEl.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 dark:bg-maroon-900 dark:text-slate-400 border border-stone-200 dark:border-maroon-750";
     }
   }
 
@@ -345,10 +399,10 @@ function renderDailyBoard() {
     if (board.sales_revenue_lm && board.sales_revenue_lm > 0) {
       const pSign = board.profit_lm >= 0 ? "+" : "";
       profLM.textContent = `${pSign}${formatRupiah(board.profit_lm)} (${pSign}${board.profit_pct_lm}%)`;
-      profLM.className = board.profit_lm >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
+      profLM.className = board.profit_lm >= 0 ? "font-extrabold text-emerald-700 dark:text-emerald-400" : "font-extrabold text-rose-600 dark:text-rose-400";
     } else {
       profLM.textContent = "-";
-      profLM.className = "font-extrabold text-slate-500";
+      profLM.className = "font-extrabold text-stone-400 dark:text-slate-500";
     }
   }
 
@@ -363,10 +417,10 @@ function renderDailyBoard() {
     if (board.sales_revenue_non_lm && board.sales_revenue_non_lm > 0) {
       const pSign = board.profit_non_lm >= 0 ? "+" : "";
       profNonLM.textContent = `${pSign}${formatRupiah(board.profit_non_lm)} (${pSign}${board.profit_pct_non_lm}%)`;
-      profNonLM.className = board.profit_non_lm >= 0 ? "font-extrabold text-emerald-400" : "font-extrabold text-rose-400";
+      profNonLM.className = board.profit_non_lm >= 0 ? "font-extrabold text-emerald-700 dark:text-emerald-400" : "font-extrabold text-rose-600 dark:text-rose-400";
     } else {
       profNonLM.textContent = "-";
-      profNonLM.className = "font-extrabold text-slate-500";
+      profNonLM.className = "font-extrabold text-stone-400 dark:text-slate-500";
     }
   }
 
@@ -402,28 +456,28 @@ function renderDailyBoard() {
     const isZero = po.total_modal === 0;
     const isTaken = po.is_taken;
     
-    // Status visual styles matching Royal Burgundy & Gold Luxury
-    let cardBorder = "border-maroon-700/70 bg-maroon-900/60";
+    // Status visual styles matching Light Luxury & Dark Velvet
+    let cardBorder = "border-stone-200 bg-[#FAF8F5] dark:border-maroon-700/70 dark:bg-maroon-900/60";
     let statusBadge = "";
     let btnAction = "";
 
     if (isZero) {
-      statusBadge = `<span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-maroon-950 text-slate-400 border border-maroon-700">TIDAK ADA MODAL</span>`;
-      btnAction = `<div class="text-[11px] font-mono text-slate-500 italic py-1 text-center">Tidak keluar modal sesi ini</div>`;
+      statusBadge = `<span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-500 dark:bg-maroon-950 dark:text-slate-400 border border-stone-200 dark:border-maroon-700">TIDAK ADA MODAL</span>`;
+      btnAction = `<div class="text-[11px] font-mono text-stone-400 dark:text-slate-500 italic py-1 text-center">Tidak keluar modal sesi ini</div>`;
     } else if (isTaken) {
-      cardBorder = "border-emerald-500/40 bg-gradient-to-b from-maroon-900/90 to-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
-      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35"><i data-lucide="check-check" class="w-3 h-3"></i> LUNAS AMBIL CASH</span>`;
+      cardBorder = "border-emerald-300 bg-emerald-50/60 dark:border-emerald-500/40 dark:bg-gradient-to-b dark:from-maroon-900/90 dark:to-emerald-950/20 shadow-xs";
+      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35"><i data-lucide="check-check" class="w-3 h-3"></i> LUNAS AMBIL CASH</span>`;
       btnAction = `
-        <button onclick="togglePayout(${po.partner_id}, false)" class="w-full py-2.5 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-800 border border-maroon-700 text-slate-300 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5 transition-colors">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-slate-400"></i>
+        <button onclick="togglePayout(${po.partner_id}, false)" class="w-full py-2.5 px-3 rounded-xl bg-white dark:bg-maroon-850 hover:bg-stone-50 dark:hover:bg-maroon-800 border border-stone-200 dark:border-maroon-700 text-stone-700 dark:text-slate-300 font-mono text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-stone-400"></i>
           <span>Ubah ke Belum Ambil</span>
         </button>
       `;
     } else {
-      cardBorder = "border-gold-500/50 bg-gradient-to-b from-maroon-850 to-maroon-900 shadow-[0_0_20px_rgba(212,175,55,0.14)] ring-1 ring-gold-500/30";
-      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-gold-500/15 text-gold-300 border border-gold-500/40 animate-pulse"><i data-lucide="clock" class="w-3 h-3 text-gold-400"></i> WAJIB AMBIL CASH</span>`;
+      cardBorder = "border-amber-400 bg-gradient-to-b from-white to-amber-50/40 dark:from-maroon-850 dark:to-maroon-900 shadow-[0_8px_25px_rgba(212,175,55,0.18)] ring-1 ring-amber-300 dark:ring-gold-500/30";
+      statusBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 dark:bg-gold-500/15 dark:text-gold-300 border border-amber-300 dark:border-gold-500/40 animate-pulse"><i data-lucide="clock" class="w-3 h-3 text-amber-600 dark:text-gold-400"></i> WAJIB AMBIL CASH</span>`;
       btnAction = `
-        <button onclick="togglePayout(${po.partner_id}, true)" class="w-full py-2.5 px-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-maroon-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-[0_0_18px_rgba(212,175,55,0.35)] active:scale-[0.98] transition-all">
+        <button onclick="togglePayout(${po.partner_id}, true)" class="w-full py-2.5 px-3 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all">
           <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
           <span>SUDAH AMBIL CASH ✓</span>
         </button>
@@ -437,25 +491,25 @@ function renderDailyBoard() {
         <div>
           <div class="flex items-start justify-between gap-2 mb-2">
             <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-extrabold text-xs shadow-md shrink-0" style="background-color: ${po.color}25; color: ${po.color}; border: 1.5px solid ${po.color}60;">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-extrabold text-xs shadow-xs shrink-0" style="background-color: ${po.color}25; color: ${po.color}; border: 1.5px solid ${po.color}60;">
                 ${po.initials}
               </div>
               <div>
-                <h3 class="text-sm font-bold text-white font-sans">${po.name}</h3>
-                <span class="text-[10px] font-mono text-amber-200/60">${itemsCountText}</span>
+                <h3 class="text-sm font-bold text-stone-900 dark:text-white font-sans">${po.name}</h3>
+                <span class="text-[10px] font-mono text-stone-500 dark:text-amber-200/60">${itemsCountText}</span>
               </div>
             </div>
             <div>${statusBadge}</div>
           </div>
 
-          <div class="my-2.5 p-3 rounded-xl bg-maroon-950/85 border border-maroon-700/80 flex items-baseline justify-between">
+          <div class="my-2.5 p-3 rounded-xl luxury-well flex items-baseline justify-between">
             <div>
-              <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Modal Yang Ditarik:</div>
-              <div class="text-xl sm:text-2xl font-mono font-extrabold ${isTaken ? 'text-emerald-400' : 'gold-metallic-text'} mt-0.5">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-stone-500 dark:text-slate-400">Modal Yang Ditarik:</div>
+              <div class="text-xl sm:text-2xl font-mono font-extrabold ${isTaken ? 'text-emerald-700 dark:text-emerald-400' : 'gold-metallic-text'} mt-0.5">
                 ${formatRupiah(po.total_modal)}
               </div>
             </div>
-            <div class="text-[10px] font-mono text-slate-400 text-right">
+            <div class="text-[10px] font-mono text-stone-500 dark:text-slate-400 text-right">
               ${po.transaction_count} transaksi
             </div>
           </div>
@@ -497,16 +551,15 @@ function setFundingMode(mode) {
   const containerPatungan = document.getElementById("patunganModeContainer");
 
   if (mode === "solo") {
-    btnSolo.className = "px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm";
-    btnPatungan.className = "px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all";
+    btnSolo.className = "px-3 py-1 rounded-lg gold-gradient-bg text-stone-900 font-bold transition-all shadow-xs";
+    btnPatungan.className = "px-3 py-1 rounded-lg text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white transition-all";
     containerSolo.classList.remove("hidden");
     containerPatungan.classList.add("hidden");
   } else {
-    btnSolo.className = "px-3 py-1 rounded-lg text-slate-400 hover:text-white transition-all";
-    btnPatungan.className = "px-3 py-1 rounded-lg gold-gradient-bg text-maroon-950 font-bold transition-all shadow-sm";
+    btnSolo.className = "px-3 py-1 rounded-lg text-stone-500 dark:text-slate-400 hover:text-stone-900 dark:hover:text-white transition-all";
+    btnPatungan.className = "px-3 py-1 rounded-lg gold-gradient-bg text-stone-900 font-bold transition-all shadow-xs";
     containerSolo.classList.add("hidden");
     containerPatungan.classList.remove("hidden");
-    // DO NOT wipe or auto-split. Render existing amounts!
     renderPatunganRows();
   }
 }
@@ -518,8 +571,8 @@ function renderSoloButtons() {
   container.innerHTML = state.partners.map(p => {
     const isSelected = p.id === state.selectedSoloPartnerId;
     const activeClass = isSelected
-      ? "border-gold-400 bg-gold-500/15 text-gold-300 shadow-[0_0_16px_rgba(212,175,55,0.25)] ring-1 ring-gold-400"
-      : "border-maroon-700 bg-maroon-950/80 text-slate-300 hover:border-gold-500/40 hover:bg-maroon-850/60";
+      ? "border-amber-400 bg-amber-50/80 text-stone-900 shadow-sm ring-1 ring-amber-300 dark:border-gold-400 dark:bg-gold-500/15 dark:text-gold-300"
+      : "border-stone-200 dark:border-maroon-700 bg-[#FAF8F5] dark:bg-maroon-950/80 text-stone-700 dark:text-slate-300 hover:border-amber-300";
 
     return `
       <button type="button" onclick="selectSoloPartner(${p.id})" class="p-3 rounded-xl border ${activeClass} flex items-center gap-2.5 text-left transition-all">
@@ -527,8 +580,8 @@ function renderSoloButtons() {
           ${p.initials}
         </div>
         <div class="truncate min-w-0">
-          <div class="text-xs font-bold text-white truncate">${p.name}</div>
-          <div class="text-[9px] font-mono text-amber-200/60">100% Modal</div>
+          <div class="text-xs font-bold text-stone-900 dark:text-white truncate">${p.name}</div>
+          <div class="text-[9px] font-mono text-stone-500 dark:text-amber-200/60">100% Modal</div>
         </div>
       </button>
     `;
@@ -549,18 +602,18 @@ function renderPatunganRows() {
     const amountVal = state.patunganAmounts[p.id] || "";
 
     return `
-      <div class="flex items-center gap-2.5 p-2.5 rounded-xl border ${isChecked ? 'border-gold-500/50 bg-gold-500/10' : 'border-maroon-700 bg-maroon-950/80'} transition-colors">
+      <div class="flex items-center gap-2.5 p-2.5 rounded-xl border ${isChecked ? 'border-amber-400 bg-amber-50/70 dark:border-gold-500/50 dark:bg-gold-500/10' : 'border-stone-200 dark:border-maroon-700 bg-[#FAF8F5] dark:bg-maroon-950/80'} transition-colors">
         <label class="flex items-center gap-2.5 cursor-pointer shrink-0">
-          <input type="checkbox" onchange="togglePatunganPartner(${p.id}, this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-gold-500 focus:ring-0 accent-gold-500 cursor-pointer">
+          <input type="checkbox" onchange="togglePatunganPartner(${p.id}, this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-amber-600 dark:text-gold-500 focus:ring-0 accent-amber-500 cursor-pointer">
           <div class="w-7 h-7 rounded-lg flex items-center justify-center font-mono text-[10px] font-extrabold" style="background-color: ${p.color}25; color: ${p.color}; border: 1px solid ${p.color}50;">
             ${p.initials}
           </div>
-          <span class="text-xs font-bold text-white w-24 sm:w-28 truncate">${p.name}</span>
+          <span class="text-xs font-bold text-stone-900 dark:text-white w-24 sm:w-28 truncate">${p.name}</span>
         </label>
 
         <div class="flex-1 relative">
-          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-gold-400/80">Rp</span>
-          <input type="number" id="partnerAmountInput_${p.id}" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" placeholder="0" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-gold-400 disabled:opacity-40 disabled:cursor-not-allowed">
+          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold text-amber-700 dark:text-gold-400/80">Rp</span>
+          <input type="number" id="partnerAmountInput_${p.id}" value="${amountVal}" ${!isChecked ? 'disabled' : ''} oninput="setPartnerAmount(${p.id}, this.value)" placeholder="0" class="w-full bg-white dark:bg-maroon-950 border border-stone-300 dark:border-maroon-700 rounded-lg pl-7 pr-2.5 py-1.5 text-xs font-mono font-bold text-stone-900 dark:text-white focus:outline-none focus:border-amber-500 dark:focus:border-gold-400 disabled:opacity-40 disabled:cursor-not-allowed">
         </div>
       </div>
     `;
@@ -572,7 +625,6 @@ function renderPatunganRows() {
 function togglePatunganPartner(id, checked) {
   if (checked) {
     state.selectedPatunganPartners.add(id);
-    // If not set yet, fill with remaining unallocated amount, without wiping others
     if (!state.patunganAmounts[id] || state.patunganAmounts[id] <= 0) {
       let allocated = 0;
       state.selectedPatunganPartners.forEach(pid => {
@@ -585,7 +637,6 @@ function togglePatunganPartner(id, checked) {
     state.selectedPatunganPartners.delete(id);
     delete state.patunganAmounts[id];
   }
-  // NEVER call autoSplitEvenly() automatically!
   renderPatunganRows();
 }
 
@@ -595,7 +646,6 @@ function setPartnerAmount(id, value) {
   updateUnallocatedCalculation();
 }
 
-// Explicit manual trigger ONLY
 function autoSplitEvenly() {
   const count = state.selectedPatunganPartners.size;
   if (count === 0 || state.inputAmount <= 0) return;
@@ -624,20 +674,19 @@ function updateUnallocatedCalculation() {
   const diff = state.inputAmount - totalAllocated;
   if (Math.abs(diff) < 1) {
     display.textContent = "Rp 0 (Pas)";
-    display.className = "font-bold text-emerald-400";
+    display.className = "font-bold text-emerald-600 dark:text-emerald-400";
   } else if (diff > 0) {
     display.textContent = `Kurang ${formatRupiah(diff)}`;
-    display.className = "font-bold text-amber-400";
+    display.className = "font-bold text-amber-600 dark:text-amber-400";
   } else {
     display.textContent = `Lebih ${formatRupiah(Math.abs(diff))}`;
-    display.className = "font-bold text-rose-400";
+    display.className = "font-bold text-rose-600 dark:text-rose-400";
   }
 }
 
 // Amount Shortcuts
 function handleAmountInput(val) {
   state.inputAmount = parseFloat(val) || 0;
-  // NEVER wipe partner amounts automatically! Just recalculate balance indicator
   updateUnallocatedCalculation();
 }
 
@@ -670,7 +719,7 @@ async function handleReceiptUpload(input) {
   if (loadingEl) loadingEl.classList.remove("hidden");
   if (badgeEl) {
     badgeEl.textContent = "AI Memindai...";
-    badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse";
+    badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 animate-pulse";
   }
 
   const formData = new FormData();
@@ -703,9 +752,8 @@ async function handleReceiptUpload(input) {
         if (amountInput) {
           amountInput.value = result.total_amount;
           handleAmountInput(result.total_amount);
-          // Highlight flash animation
-          amountInput.classList.add("border-gold-400", "bg-gold-500/10");
-          setTimeout(() => amountInput.classList.remove("border-gold-400", "bg-gold-500/10"), 1500);
+          amountInput.classList.add("border-amber-400", "bg-amber-50/50");
+          setTimeout(() => amountInput.classList.remove("border-amber-400", "bg-amber-50/50"), 1500);
         }
       }
 
@@ -721,7 +769,7 @@ async function handleReceiptUpload(input) {
 
       if (badgeEl) {
         badgeEl.textContent = "✓ Terisi Otomatis";
-        badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-300";
       }
 
       showToast(`Struk dipindai! Nominal ${formatRupiah(result.total_amount)} otomatis terisi.`);
@@ -760,7 +808,7 @@ function clearReceiptUpload() {
   if (promptEl) promptEl.classList.remove("hidden");
   if (badgeEl) {
     badgeEl.textContent = "Auto-Fill Form";
-    badgeEl.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-500/40";
+    badgeEl.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-gold-300 border border-amber-500/40";
   }
   if (window.lucide) lucide.createIcons();
 }
@@ -848,7 +896,7 @@ async function submitTransaction() {
       document.getElementById("inputItemName").value = "";
       document.getElementById("inputNotes").value = "";
       await loadAllData();
-      switchTab("payout"); // Auto switch to Payout board to see immediate updated modal
+      switchTab("payout");
     } else {
       showToast(data.detail || "Gagal menyimpan", false);
     }
@@ -872,46 +920,46 @@ function renderTransactionsList() {
   if (badge) badge.textContent = `${list.length} Transaksi`;
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada transaksi pembelian pada sesi aktif ini.</div>`;
+    container.innerHTML = `<div class="text-center py-10 text-stone-400 dark:text-slate-400 text-xs">Belum ada transaksi pembelian pada sesi aktif ini.</div>`;
     return;
   }
 
   container.innerHTML = list.map(tx => {
     const sharesHtml = tx.shares.map(s => `
-      <span class="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-lg bg-maroon-950 border border-maroon-700">
+      <span class="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-lg luxury-well">
         <span class="w-2 h-2 rounded-full" style="background-color: ${s.partner_color}"></span>
-        <span class="font-bold text-slate-200">${s.partner_name}</span>: <span class="text-gold-300 font-semibold">${formatRupiah(s.amount)}</span> <span class="text-slate-400">(${s.percentage}%)</span>
+        <span class="font-bold text-stone-900 dark:text-slate-200">${s.partner_name}</span>: <span class="text-amber-800 dark:text-gold-300 font-semibold">${formatRupiah(s.amount)}</span> <span class="text-stone-500 dark:text-slate-400">(${s.percentage}%)</span>
       </span>
     `).join(" ");
 
     return `
-      <article class="p-3.5 rounded-2xl bg-maroon-900/80 border border-gold-500/20 hover:border-gold-500/40 space-y-2.5 transition-colors shadow-sm">
+      <article class="p-3.5 rounded-2xl luxury-card hover:border-amber-400 space-y-2.5 transition-colors shadow-xs">
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="flex items-center gap-2">
-              <h4 class="text-xs font-bold text-white font-sans">${tx.item_name}</h4>
+              <h4 class="text-xs font-bold text-stone-900 dark:text-white font-sans">${tx.item_name}</h4>
               ${tx.gold_category === "NON_LM" 
-                ? '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-rose-300 bg-rose-500/15 border border-rose-500/35 px-2 py-0.5 rounded-full">💍 Non-LM</span>'
-                : '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-gold-300 bg-gold-500/15 border border-gold-500/35 px-2 py-0.5 rounded-full">🪙 LM</span>'}
-              <span class="text-[9px] font-mono text-amber-200/70 bg-maroon-950 px-2 py-0.5 rounded-full border border-maroon-700">${tx.created_at.substring(11, 16)} WIB</span>
+                ? '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-rose-800 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/15 border border-rose-300 dark:border-rose-500/35 px-2 py-0.5 rounded-full">💍 Non-LM</span>'
+                : '<span class="inline-flex items-center gap-1 text-[9px] font-bold text-amber-800 dark:text-gold-300 bg-amber-50 dark:bg-gold-500/15 border border-amber-300 dark:border-gold-500/35 px-2 py-0.5 rounded-full">🪙 LM</span>'}
+              <span class="text-[9px] font-mono text-stone-600 dark:text-amber-200/70 bg-stone-100 dark:bg-maroon-950 px-2 py-0.5 rounded-full border border-stone-200 dark:border-maroon-700">${tx.created_at.substring(11, 16)} WIB</span>
             </div>
-            ${tx.notes ? `<p class="text-[11px] text-slate-400 mt-1">${tx.notes}</p>` : ''}
+            ${tx.notes ? `<p class="text-[11px] text-stone-500 dark:text-slate-400 mt-1">${tx.notes}</p>` : ''}
           </div>
           <div class="flex items-center gap-2">
             ${tx.receipt_image ? `
-              <button onclick="openReceiptModal('/api/v1/receipts/${tx.receipt_image}')" class="text-[10px] font-mono font-bold text-gold-300 hover:text-white px-2.5 py-1 rounded-lg bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/35 flex items-center gap-1 transition-all shadow-sm">
-                <i data-lucide="image" class="w-3 h-3 text-gold-400"></i>
+              <button onclick="openReceiptModal('/api/v1/receipts/${tx.receipt_image}')" class="text-[10px] font-mono font-bold text-amber-800 dark:text-gold-300 hover:text-stone-900 dark:hover:text-white px-2.5 py-1 rounded-lg luxury-well flex items-center gap-1 transition-all shadow-xs">
+                <i data-lucide="image" class="w-3 h-3 text-amber-600 dark:text-gold-400"></i>
                 <span>Nota</span>
               </button>
             ` : ''}
             <span class="text-xs font-mono font-extrabold gold-metallic-text">${formatRupiah(tx.total_amount)}</span>
-            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus Transaksi">
+            <button onclick="deleteTransaction('${tx.id}')" class="text-stone-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus Transaksi">
               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             </button>
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-1.5 pt-1.5 border-t border-maroon-750">
+        <div class="flex flex-wrap gap-1.5 pt-1.5 border-t border-stone-200 dark:border-maroon-750">
           ${sharesHtml}
         </div>
       </article>
@@ -1036,7 +1084,7 @@ async function loadHistoryData() {
   if (!container) return;
 
   try {
-    container.innerHTML = `<div class="text-center py-8 text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i> Memuat arsip riwayat...</div>`;
+    container.innerHTML = `<div class="text-center py-8 text-stone-400 dark:text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-600 dark:text-gold-400"></i> Memuat arsip riwayat...</div>`;
     if (window.lucide) lucide.createIcons();
 
     const res = await fetch("/api/v1/history");
@@ -1047,7 +1095,7 @@ async function loadHistoryData() {
       renderHistoryList();
     }
   } catch (err) {
-    container.innerHTML = `<div class="text-center py-8 text-rose-400 text-xs">Gagal memuat arsip riwayat</div>`;
+    container.innerHTML = `<div class="text-center py-8 text-rose-500 text-xs">Gagal memuat arsip riwayat</div>`;
   }
 }
 
@@ -1057,54 +1105,54 @@ function renderHistoryList() {
 
   const list = state.historyList || [];
   if (list.length === 0) {
-    container.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Belum ada riwayat sesi buku.</div>`;
+    container.innerHTML = `<div class="text-center py-10 text-stone-400 dark:text-slate-400 text-xs">Belum ada riwayat sesi buku.</div>`;
     return;
   }
 
   container.innerHTML = list.map(item => {
     const isClosed = item.status === "CLOSED";
     const statusPill = isClosed
-      ? `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">DITUTUP (${item.closed_at_formatted || 'Arsip'})</span>`
-      : `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/35 animate-pulse">SEDANG AKTIF</span>`;
+      ? `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 dark:bg-slate-800 dark:text-slate-300 border border-stone-200 dark:border-slate-700">DITUTUP (${item.closed_at_formatted || 'Arsip'})</span>`
+      : `<span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35 animate-pulse">SEDANG AKTIF</span>`;
 
     return `
-      <article class="p-4 rounded-2xl bg-maroon-900/80 border ${isClosed ? 'border-gold-500/25' : 'border-emerald-500/40'} space-y-3 shadow-md">
+      <article class="p-4 rounded-2xl luxury-card space-y-3 shadow-md">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <h4 class="text-xs sm:text-sm font-bold text-white font-sans">${item.display_name}</h4>
-            <div class="text-[10px] font-mono text-amber-200/60 mt-0.5">${item.total_transactions} Transaksi</div>
+            <h4 class="text-xs sm:text-sm font-bold text-stone-900 dark:text-white font-sans">${item.display_name}</h4>
+            <div class="text-[10px] font-mono text-stone-500 dark:text-amber-200/60 mt-0.5">${item.total_transactions} Transaksi</div>
           </div>
           <div>${statusPill}</div>
         </div>
 
         <!-- Metrics Grid: Modal, Jual, Laba -->
-        <div class="grid grid-cols-3 gap-2 p-3 rounded-xl bg-maroon-950/80 border border-maroon-700/80 text-xs font-mono">
+        <div class="grid grid-cols-3 gap-2 p-3 rounded-xl luxury-well text-xs font-mono">
           <div>
-            <div class="text-[9px] text-slate-400 uppercase">Modal:</div>
-            <div class="font-extrabold text-slate-200 text-xs sm:text-sm mt-0.5 truncate">${item.total_capital_formatted}</div>
+            <div class="text-[9px] text-stone-500 dark:text-slate-400 uppercase">Modal:</div>
+            <div class="font-extrabold text-stone-900 dark:text-slate-200 text-xs sm:text-sm mt-0.5 truncate">${item.total_capital_formatted}</div>
           </div>
           <div>
-            <div class="text-[9px] text-gold-400 uppercase">Hasil Jual:</div>
+            <div class="text-[9px] text-amber-700 dark:text-gold-400 uppercase">Hasil Jual:</div>
             <div class="font-extrabold gold-metallic-text text-xs sm:text-sm mt-0.5 truncate">${item.sales_revenue > 0 ? item.sales_revenue_formatted : '-'}</div>
           </div>
           <div>
-            <div class="text-[9px] text-emerald-400 uppercase">Keuntungan:</div>
-            <div class="font-extrabold ${item.sales_revenue > 0 ? (item.net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'} text-xs sm:text-sm mt-0.5 truncate">
+            <div class="text-[9px] text-emerald-700 dark:text-emerald-400 uppercase">Keuntungan:</div>
+            <div class="font-extrabold ${item.sales_revenue > 0 ? (item.net_profit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') : 'text-stone-400 dark:text-slate-500'} text-xs sm:text-sm mt-0.5 truncate">
               ${item.sales_revenue > 0 ? `${item.net_profit >= 0 ? '+' : ''}${item.net_profit_formatted}` : '<span class="italic text-[10px]">Belum diinput</span>'}
             </div>
           </div>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
-          <button type="button" onclick="openSalesModal('${item.date_str}')" class="py-2 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/35 text-gold-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm" title="Input atau Edit Hasil Penjualan Sore">
+          <button type="button" onclick="openSalesModal('${item.date_str}')" class="py-2 px-3 rounded-xl luxury-well hover:border-amber-400 text-amber-800 dark:text-gold-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs" title="Input atau Edit Hasil Penjualan Sore">
             <i data-lucide="circle-dollar-sign" class="w-3.5 h-3.5"></i>
             <span>${item.sales_revenue > 0 ? 'Ubah Jual' : 'Input Jual'}</span>
           </button>
-          <button type="button" onclick="openHistoryDetail('${item.date_str}')" class="flex-1 py-2 px-3 rounded-xl bg-maroon-850 hover:bg-maroon-750 border border-gold-500/30 text-amber-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
-            <i data-lucide="eye" class="w-3.5 h-3.5 text-gold-400"></i>
+          <button type="button" onclick="openHistoryDetail('${item.date_str}')" class="flex-1 py-2 px-3 rounded-xl luxury-well hover:border-amber-400 text-stone-800 dark:text-amber-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-600 dark:text-gold-400"></i>
             <span>Rincian Sesi</span>
           </button>
-          <button type="button" onclick="copyHistoryWA('${item.date_str}')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]">
+          <button type="button" onclick="copyHistoryWA('${item.date_str}')" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-[0.98]">
             <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
             <span>Salin WA</span>
           </button>
@@ -1138,7 +1186,7 @@ async function openHistoryDetail(dateStr) {
   if (!modal || !content) return;
 
   modal.classList.remove("hidden");
-  content.innerHTML = `<div class="text-center py-8 text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-gold-400"></i> Memuat detail sesi...</div>`;
+  content.innerHTML = `<div class="text-center py-8 text-stone-400 dark:text-slate-400 font-mono text-xs flex items-center justify-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-amber-600 dark:text-gold-400"></i> Memuat detail sesi...</div>`;
   if (window.lucide) lucide.createIcons();
 
   try {
@@ -1153,33 +1201,33 @@ async function openHistoryDetail(dateStr) {
       if (title) title.textContent = board.display_name || dateStr;
       if (status) {
         status.textContent = board.status === "CLOSED" ? `BUKU DITUTUP (${board.closed_at ? board.closed_at.substring(11, 16) + ' WIB' : 'Arsip'})` : "SESI AKTIF";
-        status.className = board.status === "CLOSED" ? "text-[10px] font-mono text-slate-400" : "text-[10px] font-mono text-emerald-400";
+        status.className = board.status === "CLOSED" ? "text-[10px] font-mono text-stone-500 dark:text-slate-400" : "text-[10px] font-mono text-emerald-600 dark:text-emerald-400";
       }
 
       const payoutsHtml = board.payouts.map(po => `
-        <div class="flex items-center justify-between p-2 rounded-xl bg-maroon-950 border border-maroon-700 text-xs">
+        <div class="flex items-center justify-between p-2 rounded-xl luxury-well text-xs">
           <div class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-md flex items-center justify-center font-mono font-bold text-[10px]" style="background-color: ${po.color}25; color: ${po.color};">
               ${po.initials}
             </div>
-            <span class="font-bold text-white">${po.name}</span>
+            <span class="font-bold text-stone-900 dark:text-white">${po.name}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="font-mono font-bold ${po.is_taken ? 'text-emerald-400' : 'text-gold-400'}">${formatRupiah(po.total_modal)}</span>
-            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded ${po.is_taken ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-400'}">${po.is_taken ? 'LUNAS' : (po.total_modal > 0 ? 'BELUM' : '-')}</span>
+            <span class="font-mono font-bold ${po.is_taken ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-gold-400'}">${formatRupiah(po.total_modal)}</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded ${po.is_taken ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300' : 'bg-stone-200 text-stone-600 dark:bg-slate-800 dark:text-slate-400'}">${po.is_taken ? 'LUNAS' : (po.total_modal > 0 ? 'BELUM' : '-')}</span>
           </div>
         </div>
       `).join("");
 
-      const txsHtml = txs.length === 0 ? `<p class="text-xs text-slate-500 py-2">Tidak ada transaksi pada sesi ini.</p>` : txs.map(t => `
-        <div class="p-2.5 rounded-xl bg-maroon-950 border border-maroon-700 space-y-1.5 text-xs">
+      const txsHtml = txs.length === 0 ? `<p class="text-xs text-stone-400 italic text-center py-2">Tidak ada transaksi pada sesi ini.</p>` : txs.map(t => `
+        <div class="p-2.5 rounded-xl luxury-well space-y-1.5 text-xs">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-white">${t.item_name}</span>
-            <span class="font-mono font-bold text-gold-400">${formatRupiah(t.total_amount)}</span>
+            <span class="font-bold text-stone-900 dark:text-white">${t.item_name}</span>
+            <span class="font-mono font-bold text-amber-700 dark:text-gold-400">${formatRupiah(t.total_amount)}</span>
           </div>
           <div class="flex flex-wrap gap-1">
             ${t.shares.map(s => `
-              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-maroon-900 border border-maroon-700 text-slate-300">
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-maroon-900 border border-stone-200 dark:border-maroon-700 text-stone-700 dark:text-slate-300">
                 ${s.partner_name}: ${formatRupiah(s.amount)}
               </span>
             `).join(" ")}
@@ -1189,20 +1237,20 @@ async function openHistoryDetail(dateStr) {
 
       content.innerHTML = `
         <div class="space-y-3">
-          <div class="p-3 rounded-xl bg-maroon-950 border border-gold-500/30 flex items-baseline justify-between">
-            <span class="text-xs text-slate-400">Total Modal Ditarik:</span>
+          <div class="p-3 rounded-xl luxury-well flex items-baseline justify-between">
+            <span class="text-xs text-stone-500 dark:text-slate-400">Total Modal Ditarik:</span>
             <span class="text-xl font-mono font-extrabold gold-metallic-text">${formatRupiah(board.total_capital)}</span>
           </div>
 
           <div>
-            <h5 class="text-xs font-bold text-amber-200/80 mb-1.5">Pengembalian Modal 7 Pemodal:</h5>
+            <h5 class="text-xs font-bold text-stone-800 dark:text-amber-200/80 mb-1.5">Pengembalian Modal 7 Pemodal:</h5>
             <div class="space-y-1.5">
               ${payoutsHtml}
             </div>
           </div>
 
           <div>
-            <h5 class="text-xs font-bold text-amber-200/80 mb-1.5">Daftar Transaksi (${txs.length}):</h5>
+            <h5 class="text-xs font-bold text-stone-800 dark:text-amber-200/80 mb-1.5">Daftar Transaksi (${txs.length}):</h5>
             <div class="space-y-1.5 max-h-48 overflow-y-auto">
               ${txsHtml}
             </div>
@@ -1211,7 +1259,7 @@ async function openHistoryDetail(dateStr) {
       `;
     }
   } catch (err) {
-    content.innerHTML = `<div class="text-center py-8 text-rose-400 text-xs">Gagal memuat rincian sesi.</div>`;
+    content.innerHTML = `<div class="text-center py-8 text-rose-500 text-xs">Gagal memuat rincian sesi.</div>`;
   }
 
   if (window.lucide) lucide.createIcons();
@@ -1251,7 +1299,7 @@ function updateInlineSalesCalc() {
   if (!previewEl) return;
 
   if (totalRev <= 0) {
-    previewEl.innerHTML = `<span class="text-slate-400 font-normal italic text-[11px]">Masukkan angka jual LM dan Non-LM di atas</span>`;
+    previewEl.innerHTML = `<span class="text-stone-400 dark:text-slate-400 font-normal italic text-[11px]">Masukkan angka jual LM dan Non-LM di atas</span>`;
     return;
   }
 
@@ -1270,9 +1318,9 @@ function updateInlineSalesCalc() {
 
   previewEl.innerHTML = `
     <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-      <span class="text-gold-300">🪙 LM: <strong>${signLM}${formatRupiah(profitLM)}</strong> (${signLM}${pctLM}%)</span>
-      <span class="text-rose-300">💍 Non-LM: <strong>${signNonLM}${formatRupiah(profitNonLM)}</strong> (${signNonLM}${pctNonLM}%)</span>
-      <span class="${totalProfit >= 0 ? 'text-emerald-400 font-extrabold' : 'text-rose-400 font-extrabold'}">💎 Total: ${pSign}${formatRupiah(totalProfit)} (${pSign}${totalPct}%)</span>
+      <span class="text-amber-800 dark:text-gold-300">🪙 LM: <strong>${signLM}${formatRupiah(profitLM)}</strong> (${signLM}${pctLM}%)</span>
+      <span class="text-rose-800 dark:text-rose-300">💍 Non-LM: <strong>${signNonLM}${formatRupiah(profitNonLM)}</strong> (${signNonLM}${pctNonLM}%)</span>
+      <span class="${totalProfit >= 0 ? 'text-emerald-700 dark:text-emerald-400 font-extrabold' : 'text-rose-600 dark:text-rose-400 font-extrabold'}">💎 Total: ${pSign}${formatRupiah(totalProfit)} (${pSign}${totalPct}%)</span>
     </div>
   `;
 }
@@ -1321,7 +1369,6 @@ async function saveInlineSales() {
 }
 
 async function openSalesModal(dateStr = null) {
-  // If opening for current session, also focus and scroll to the inline form on the card
   if (!dateStr) {
     const inlineInput = document.getElementById("inlineInputSalesLM");
     if (inlineInput) {
@@ -1448,13 +1495,13 @@ function updateSalesCalculationPreview() {
   const prevLM = document.getElementById("previewProfitLM");
   if (prevLM) {
     prevLM.textContent = `Laba LM: ${signLM}${formatRupiah(profitLM)} (${signLM}${pctLM}%)`;
-    prevLM.className = profitLM >= 0 ? "text-[11px] font-mono text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-400 font-bold";
+    prevLM.className = profitLM >= 0 ? "text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-600 dark:text-rose-400 font-bold";
   }
 
   const prevNonLM = document.getElementById("previewProfitNonLM");
   if (prevNonLM) {
     prevNonLM.textContent = `Laba Non-LM: ${signNonLM}${formatRupiah(profitNonLM)} (${signNonLM}${pctNonLM}%)`;
-    prevNonLM.className = profitNonLM >= 0 ? "text-[11px] font-mono text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-400 font-bold";
+    prevNonLM.className = profitNonLM >= 0 ? "text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold" : "text-[11px] font-mono text-rose-600 dark:text-rose-400 font-bold";
   }
 
   const prevTotal = document.getElementById("formattedSalesPreview");
@@ -1466,14 +1513,14 @@ function updateSalesCalculationPreview() {
   if (profitResEl) {
     profitResEl.textContent = `${totalSign}${formatRupiah(totalProfit)}`;
     profitResEl.className = totalProfit >= 0 
-      ? "text-base font-mono font-extrabold text-emerald-400" 
-      : "text-base font-mono font-extrabold text-rose-400";
+      ? "text-base font-mono font-extrabold text-emerald-700 dark:text-emerald-400" 
+      : "text-base font-mono font-extrabold text-rose-600 dark:text-rose-400";
   }
   if (profitPctEl) {
     profitPctEl.textContent = `(${totalSign}${totalPct}%)`;
     profitPctEl.className = totalProfit >= 0 
-      ? "text-[10px] font-mono text-emerald-300" 
-      : "text-[10px] font-mono text-rose-300";
+      ? "text-[10px] font-mono text-emerald-600 dark:text-emerald-300" 
+      : "text-[10px] font-mono text-rose-600 dark:text-rose-300";
   }
 }
 
@@ -1536,12 +1583,12 @@ function openSettingsModal() {
   if (newPartnerInput) newPartnerInput.value = "";
 
   container.innerHTML = state.partners.map(p => `
-    <div class="flex items-center gap-2 bg-maroon-950 p-2.5 rounded-xl border border-maroon-700">
+    <div class="flex items-center gap-2 luxury-well p-2.5 rounded-xl">
       <div class="w-8 h-8 rounded-lg flex items-center justify-center font-mono font-extrabold text-xs shrink-0" style="background-color: ${p.color}25; color: ${p.color}; border: 1.5px solid ${p.color}50;">
         ${p.initials}
       </div>
-      <input type="text" id="partnerNameInput_${p.id}" value="${p.name}" class="flex-1 bg-maroon-900 border border-maroon-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-gold-400 font-bold" placeholder="Nama Pemodal">
-      <button type="button" onclick="deletePartner(${p.id}, '${p.name}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus / Nonaktifkan Pemodal">
+      <input type="text" id="partnerNameInput_${p.id}" value="${p.name}" class="flex-1 bg-white dark:bg-maroon-900 border border-stone-300 dark:border-maroon-700 rounded-lg px-3 py-1.5 text-xs text-stone-900 dark:text-white focus:outline-none focus:border-amber-500 dark:focus:border-gold-400 font-bold" placeholder="Nama Pemodal">
+      <button type="button" onclick="deletePartner(${p.id}, '${p.name}')" class="text-stone-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors" title="Hapus / Nonaktifkan Pemodal">
         <i data-lucide="trash-2" class="w-4 h-4"></i>
       </button>
     </div>
@@ -1579,7 +1626,7 @@ async function addNewPartner() {
       showToast(`Pemodal ${name} berhasil ditambahkan!`);
       if (input) input.value = "";
       await loadAllData();
-      openSettingsModal(); // Refresh list inside modal
+      openSettingsModal();
     } else {
       showToast(data.detail || "Gagal menambahkan pemodal", false);
     }
@@ -1597,7 +1644,7 @@ async function deletePartner(partnerId, partnerName) {
     if (data.success) {
       showToast(data.message || `Pemodal ${partnerName} berhasil dihapus.`);
       await loadAllData();
-      openSettingsModal(); // Refresh modal
+      openSettingsModal();
     } else {
       showToast(data.detail || "Gagal menghapus pemodal", false);
     }
@@ -1629,6 +1676,7 @@ async function saveAllPartnerSettings() {
 }
 
 // Global browser window exports for event handlers
+window.toggleTheme = toggleTheme;
 window.setGoldCategory = setGoldCategory;
 window.addInlineSalesField = addInlineSalesField;
 window.addModalSalesField = addModalSalesField;
@@ -1646,6 +1694,7 @@ window.saveAllPartnerSettings = saveAllPartnerSettings;
 
 // Boot application
 window.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   loadAllData();
   if (window.lucide) lucide.createIcons();
 });
