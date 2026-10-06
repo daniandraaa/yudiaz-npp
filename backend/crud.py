@@ -4,6 +4,8 @@ Author: Devera (CTO & Lead Accountant)
 """
 
 import uuid
+import os
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from backend.database import get_connection, db_session, db_readonly
@@ -893,3 +895,51 @@ def get_history_summary() -> List[Dict[str, Any]]:
             "sold_at": r["sold_at"],
         })
     return result
+
+RECEIPTS_DIR = Path(__file__).parent.parent / "data" / "receipts"
+
+def delete_day_session(date_str: str) -> Dict[str, Any]:
+    """
+    Permanently delete a specific session and its associated transactions, shares,
+    and payout statuses. Used to prune test or erroneous sessions.
+    """
+    with db_session() as conn:
+        cursor = conn.cursor()
+        
+        # Check if session exists
+        row = cursor.execute("SELECT date_str, status, opened_at FROM days WHERE date_str = ?;", (date_str,)).fetchone()
+        if not row:
+            raise ValueError(f"Sesi dengan kode '{date_str}' tidak ditemukan.")
+            
+        # Get receipt images to clean up disk
+        trx_rows = cursor.execute("SELECT id, receipt_image FROM transactions WHERE day_date = ?;", (date_str,)).fetchall()
+        for tr in trx_rows:
+            img = tr["receipt_image"]
+            if img:
+                fname = os.path.basename(img)
+                fpath = RECEIPTS_DIR / fname
+                try:
+                    if fpath.exists():
+                        fpath.unlink()
+                except Exception:
+                    pass
+
+        t_ids = [tr["id"] for tr in trx_rows]
+        t_count = len(t_ids)
+        
+        # Delete related shares
+        if t_ids:
+            placeholders = ",".join(["?"] * len(t_ids))
+            cursor.execute(f"DELETE FROM transaction_shares WHERE transaction_id IN ({placeholders});", t_ids)
+            
+        cursor.execute("DELETE FROM transactions WHERE day_date = ?;", (date_str,))
+        cursor.execute("DELETE FROM daily_payouts WHERE day_date = ?;", (date_str,))
+        cursor.execute("DELETE FROM days WHERE date_str = ?;", (date_str,))
+        
+    return {
+        "success": True,
+        "deleted_date": date_str,
+        "deleted_transactions": t_count,
+        "message": f"Sesi pembukuan '{date_str}' ({t_count} transaksi) berhasil dihapus permanen dari riwayat."
+    }
+
