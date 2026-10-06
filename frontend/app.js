@@ -1200,6 +1200,8 @@ async function openHistoryDetail(dateStr) {
       const board = data.data.board;
       const txs = data.data.transactions;
       state.selectedHistoryBoard = board;
+      state.currentHistoryDate = dateStr;
+      state.currentHistoryTitle = board.display_name || dateStr;
 
       if (title) title.textContent = board.display_name || dateStr;
       if (status) {
@@ -1278,6 +1280,64 @@ function copySpecificHistoryWA() {
     copyTextToClipboard(state.selectedHistoryBoard.whatsapp_rekap, "Rekap WA riwayat sesi berhasil disalin ke clipboard!");
   } else {
     showToast("Data WA tidak ditemukan", false);
+  }
+}
+
+function deleteCurrentDetailSession() {
+  if (!state.currentHistoryDate) return;
+  confirmDeleteHistorySession(state.currentHistoryDate, state.currentHistoryTitle || state.currentHistoryDate);
+}
+
+let pendingDeleteSessionDate = null;
+
+function confirmDeleteHistorySession(dateStr, displayName) {
+  pendingDeleteSessionDate = dateStr;
+  const modal = document.getElementById("modalConfirmDeleteHistory");
+  const nameEl = document.getElementById("confirmDeleteSessionName");
+  if (nameEl) nameEl.textContent = `Sesi: ${displayName || dateStr}`;
+  if (modal) modal.classList.remove("hidden");
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeConfirmDeleteHistoryModal() {
+  pendingDeleteSessionDate = null;
+  const modal = document.getElementById("modalConfirmDeleteHistory");
+  if (modal) modal.classList.add("hidden");
+}
+
+async function executeDeleteHistorySession() {
+  if (!pendingDeleteSessionDate) return;
+  const dateToDelete = pendingDeleteSessionDate;
+  const btn = document.getElementById("btnExecuteDeleteHistory");
+  const originalHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Menghapus...`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  try {
+    const res = await fetch(`/api/v1/history/${dateToDelete}`, {
+      method: "DELETE"
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || `Sesi riwayat ${dateToDelete} berhasil dihapus.`);
+      closeConfirmDeleteHistoryModal();
+      closeHistoryDetailModal();
+      await loadHistory();
+      await loadAllData(true);
+    } else {
+      showToast(data.detail || "Gagal menghapus riwayat sesi", false);
+    }
+  } catch (err) {
+    showToast("Kendala koneksi ke server", false);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (window.lucide) lucide.createIcons();
+    }
   }
 }
 
@@ -1694,6 +1754,10 @@ window.closeSettingsModal = closeSettingsModal;
 window.addNewPartner = addNewPartner;
 window.deletePartner = deletePartner;
 window.saveAllPartnerSettings = saveAllPartnerSettings;
+window.deleteCurrentDetailSession = deleteCurrentDetailSession;
+window.confirmDeleteHistorySession = confirmDeleteHistorySession;
+window.closeConfirmDeleteHistoryModal = closeConfirmDeleteHistoryModal;
+window.executeDeleteHistorySession = executeDeleteHistorySession;
 
 // Boot application
 window.addEventListener("DOMContentLoaded", () => {
