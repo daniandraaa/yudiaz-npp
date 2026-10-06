@@ -55,22 +55,14 @@ def format_session_display_name(date_str: str, opened_at_iso: Optional[str] = No
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ]
     
-    open_time_str = ""
-    if opened_at_iso:
-        try:
-            dt_open = datetime.fromisoformat(opened_at_iso)
-            open_time_str = f" • Dibuka {dt_open.strftime('%H:%M')} WIB"
-        except Exception:
-            pass
-
     try:
         dt = datetime.strptime(base_date, "%Y-%m-%d")
         day_name = days_indo[dt.weekday()]
         month_name = months_indo[dt.month]
         formatted = f"{day_name}, {dt.day} {month_name} {dt.year}"
-        return f"{formatted}{session_suffix}{open_time_str}"
+        return f"{formatted}{session_suffix}"
     except Exception:
-        return f"{date_str}{session_suffix}{open_time_str}"
+        return f"{date_str}{session_suffix}"
 
 def get_all_partners() -> List[PartnerItem]:
     with db_readonly() as conn:

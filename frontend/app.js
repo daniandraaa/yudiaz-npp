@@ -278,61 +278,13 @@ function renderDailyBoard() {
 
   const dot = document.getElementById("sessionIndicatorDot");
   if (dot) {
-    if (isClosed) {
-      dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
-    } else {
-      dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse";
-    }
+    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse";
   }
 
   const badge = document.getElementById("sessionStatusBadge");
   if (badge) {
-    if (isClosed) {
-      badge.textContent = "BUKU DITUTUP";
-      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-300 dark:border-rose-500/40";
-    } else {
-      badge.textContent = "SESI AKTIF";
-      badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35";
-    }
-  }
-
-  // Toggle Buka Buku Banner
-  const closedBanner = document.getElementById("bookClosedBanner");
-  if (closedBanner) {
-    if (isClosed) {
-      closedBanner.classList.remove("hidden");
-    } else {
-      closedBanner.classList.add("hidden");
-    }
-  }
-
-  // Form Catat Beli states
-  const formWarning = document.getElementById("closedWarningInForm");
-  const formContainer = document.getElementById("formCatatBeliContainer");
-  if (formWarning && formContainer) {
-    if (isClosed) {
-      formWarning.classList.remove("hidden");
-      formContainer.classList.add("opacity-40", "pointer-events-none");
-    } else {
-      formWarning.classList.add("hidden");
-      formContainer.classList.remove("opacity-40", "pointer-events-none");
-    }
-  }
-
-  // Main session toggle button in Ambil Modal tab
-  const toggleBtn = document.getElementById("mainSessionToggleBtn");
-  const toggleText = document.getElementById("mainSessionToggleText");
-  const toggleIcon = document.getElementById("mainSessionToggleIcon");
-  if (toggleBtn && toggleText) {
-    if (isClosed) {
-      toggleBtn.className = "py-3.5 px-4 rounded-xl gold-gradient-bg gold-gradient-bg-hover text-stone-900 font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]";
-      toggleText.textContent = "Buka Buku Baru";
-      if (toggleIcon) toggleIcon.setAttribute("data-lucide", "book-open");
-    } else {
-      toggleBtn.className = "py-3 px-4 rounded-xl luxury-well hover:border-gold-500/50 text-stone-700 dark:text-amber-100/80 font-mono text-xs flex items-center justify-center gap-2 transition-all";
-      toggleText.textContent = "Tutup Buku Hari Ini";
-      if (toggleIcon) toggleIcon.setAttribute("data-lucide", "lock");
-    }
+    badge.textContent = "HARI INI • AKTIF";
+    badge.className = "font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/35";
   }
 
   document.getElementById("heroTotalCapital").textContent = formatRupiah(board.total_capital);
@@ -828,12 +780,6 @@ function closeReceiptModal() {
 
 // ==================== SUBMIT TRANSACTION ====================
 async function submitTransaction() {
-  if (state.dailyBoard && state.dailyBoard.status === "CLOSED") {
-    showToast("Buku transaksi sedang ditutup! Silakan buka buku terlebih dahulu.", false);
-    promptOpenSession();
-    return;
-  }
-
   if (state.inputAmount <= 0) {
     showToast("Nominal pembelian belum diisi!", false);
     document.getElementById("inputTotalAmount").focus();
@@ -1015,67 +961,6 @@ function fallbackCopy(text, successMsg) {
   document.execCommand("copy");
   document.body.removeChild(ta);
   showToast(successMsg || "Berhasil disalin ke clipboard!");
-}
-
-// ==================== CLOSE & OPEN SESSIONS ====================
-function handleMainSessionAction() {
-  if (state.dailyBoard && state.dailyBoard.status === "CLOSED") {
-    promptOpenSession();
-  } else {
-    promptCloseSession();
-  }
-}
-
-async function promptOpenSession() {
-  const conf = confirm(
-    "BUKA BUKU TRANSAKSI BARU?\n\n" +
-    "• Hari, tanggal, dan jam buka akan dicatat otomatis secara resmi.\n" +
-    "• Papan modal dan daftar transaksi dimulai bersih dari Rp 0.\n\n" +
-    "Lanjutkan buka buku sekarang?"
-  );
-  if (!conf) return;
-
-  try {
-    const res = await fetch("/api/v1/day/open", { method: "POST" });
-    const data = await res.json();
-    if (data.success) {
-      showToast(data.message || "Buku berhasil dibuka! Sesi baru aktif.");
-      await loadAllData();
-      switchTab("payout");
-    } else {
-      showToast(data.detail || "Gagal membuka buku", false);
-    }
-  } catch (err) {
-    showToast("Gagal menyambung ke server", false);
-  }
-}
-
-async function promptCloseSession() {
-  const isAll = state.dailyBoard && state.dailyBoard.all_settled;
-  const msg = isAll 
-    ? "TUTUP BUKU TRANSAKSI?\n\n" +
-      "• Seluruh transaksi sesi ini akan diarsipkan ke Riwayat.\n" +
-      "• Status buku kasir akan DITUTUP (modal kembali ke Rp 0).\n" +
-      "• Sesi baru hanya akan terbuka ketika Anda menekan 'Buka Buku'.\n\n" +
-      "Tutup buku sekarang?"
-    : "PERHATIAN: Masih ada pemodal yang belum ambil cash di meja kasir!\n\n" +
-      "Yakin ingin menutup buku sesi ini? Data akan diarsipkan ke Riwayat dan status buku akan DITUTUP.";
-  
-  if (!confirm(msg)) return;
-
-  try {
-    const res = await fetch("/api/v1/day/close", { method: "POST" });
-    const data = await res.json();
-    if (data.success) {
-      showToast("Buku transaksi berhasil ditutup & diarsipkan.");
-      await loadAllData();
-      switchTab("payout");
-    } else {
-      showToast(data.detail || "Gagal menutup sesi", false);
-    }
-  } catch (err) {
-    showToast("Gagal menutup sesi", false);
-  }
 }
 
 // ==================== HISTORY ARCHIVE ====================
