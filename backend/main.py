@@ -244,6 +244,18 @@ def get_history_detail(date_str: str):
     txs = crud.get_day_transactions(day_date=date_str)
     return {"success": True, "data": {"board": board, "transactions": txs}}
 
+@app.delete("/api/v1/history/{date_str}")
+@app.delete("/api/v1/days/{date_str}")
+def delete_history_session(date_str: str):
+    """Delete a specific day session permanently (useful for discarding test sessions)."""
+    try:
+        res = crud.delete_day_session(date_str)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menghapus sesi riwayat: {str(e)}")
+
 # 8. Frontend Static Serving
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")

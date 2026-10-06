@@ -1156,6 +1156,9 @@ function renderHistoryList() {
             <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
             <span>Salin WA</span>
           </button>
+          <button type="button" onclick="confirmDeleteHistorySession('${item.date_str}', '${(item.display_name || item.date_str).replace(/'/g, "\\'")}')" class="py-2 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors" title="Hapus Riwayat Sesi Ini">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
         </div>
       </article>
     `;
